@@ -4,11 +4,7 @@
     <meta charset="UTF-8">
     <title>Escape: Chococat & Kuromi's Mischief (Enhanced)</title>
     
-    <!-- Etiquetas Open Graph (Para que se vea un cuadro bonito al compartir en WhatsApp/Redes) -->
-    <meta property="og:title" content="Escape: Chococat & Kuromi's Mischief">
-    <meta property="og:description" content="Sobrevive y escapa de la furia de Chococat en este juego 3D web. ¡Prueba el modo Granny!">
-    <meta property="og:type" content="website">
-
+    <meta name="description" content="Un divertido juego web 3D de terror y supervivencia. ¡Escapa de la furia de Chococat, Kuromi, My Melody y Molang! Juega gratis en tu navegador o celular.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; position: fixed; overflow: hidden; background-color: #000; font-family: 'Courier New', Courier, monospace; touch-action: none; user-select: none; -webkit-user-select: none; overscroll-behavior: none; }
@@ -16,7 +12,7 @@
         /* --- UI PRINCIPAL --- */
         #ui {
             position: absolute; top: 10px; left: 10px; color: white; pointer-events: none;
-            text-shadow: 1px 1px 2px black; z-index: 5; display: none; /* Oculto hasta elegir dificultad */
+            text-shadow: 1px 1px 2px black; z-index: 5; display: none;
         }
         #status { font-size: 24px; font-weight: bold; }
         #objective { font-size: 20px; color: gold; margin-top: 5px; }
@@ -26,14 +22,9 @@
             margin-top: 10px; font-size: 12px; color: cyan; background: rgba(0,0,50,0.7); 
             padding: 5px; border-radius: 5px; display: none; border: 1px solid cyan;
         }
-        
-        #kitty-status { 
-            margin-top: 15px; font-size: 20px; font-weight: bold; color: #ff69b4; 
-            text-shadow: 0 0 5px #ff69b4;
-        }
 
         #kuromi-status {
-            margin-top: 5px; font-size: 18px; font-weight: bold; color: #a020f0; 
+            margin-top: 15px; font-size: 18px; font-weight: bold; color: #a020f0; 
             text-shadow: 0 0 5px #a020f0; display: none; 
         }
 
@@ -50,13 +41,14 @@
         #grace-period {
             margin-top: 10px; color: cyan; font-weight: bold; 
             animation: blink 1s infinite; display: none;
+            background: rgba(0, 50, 100, 0.8); padding: 5px; border-radius: 5px;
         }
         @keyframes blink { 50% { opacity: 0; } }
 
         /* --- CONTROLES MÓVILES --- */
         #mobile-controls {
             display: none; position: absolute; bottom: 30px; right: 30px;
-            grid-template-columns: repeat(3, 1fr); gap: 15px; z-index: 10; pointer-events: none;
+            grid-template-columns: repeat(2, 1fr); gap: 15px; z-index: 10; pointer-events: none;
         }
         .action-btn {
             width: 65px; height: 65px; border-radius: 50%;
@@ -80,50 +72,47 @@
             background: rgba(255, 255, 255, 0.6); box-shadow: 0 0 10px black;
         }
 
-        /* --- PANTALLA LEGACY Y MENÚ DE INICIO --- */
-        #legacy-prompt {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(15, 15, 15, 0.98); z-index: 30;
-            display: none; flex-direction: column; justify-content: center; align-items: center;
-            color: white; text-align: center; font-family: 'Courier New', monospace; padding: 20px; box-sizing: border-box;
-        }
-        #legacy-prompt h1 { font-size: 35px; color: yellow; text-shadow: 0 0 15px yellow; margin-bottom: 20px; }
-        #legacy-prompt p { font-size: 16px; max-width: 600px; line-height: 1.5; margin-bottom: 30px; }
-        .legacy-btn { padding: 15px 25px; font-size: 18px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; margin: 10px; pointer-events: auto; }
-        .legacy-btn-yes { background: lime; color: black; box-shadow: 0 0 15px lime; }
-        .legacy-btn-no { background: #555; color: white; }
-
+        /* --- MENÚ DE INICIO ARRASTRABLE --- */
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(5, 5, 5, 0.98); z-index: 20;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            color: white; text-align: center;
+            color: white; text-align: center; overflow: hidden;
         }
-        #start-screen h1 { font-size: 60px; color: #ff69b4; text-shadow: 0 0 20px #ff69b4; margin-bottom: 40px; }
-        #start-screen p { font-size: 24px; margin-bottom: 30px; color: #ddd; }
+        #start-screen h1 { font-size: 8vw; color: #ff69b4; text-shadow: 0 0 20px #ff69b4; margin-bottom: 10px; margin-top: 0;}
+        #start-screen p { font-size: 18px; margin-bottom: 20px; color: #ddd; }
+
+        /* Contenedor del Carrusel */
+        #menu-container {
+            display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+            width: 95%; max-width: 600px; gap: 20px; padding: 20px 0;
+            -webkit-overflow-scrolling: touch; cursor: grab;
+        }
+        #menu-container:active { cursor: grabbing; }
+        #menu-container::-webkit-scrollbar { display: none; } /* Ocultar barra scroll */
         
         .difficulty-btn {
             background: transparent; border: 2px solid white; color: white;
-            padding: 15px 40px; margin: 10px; font-size: 24px; cursor: pointer;
+            padding: 20px; font-size: 22px; cursor: pointer;
             font-family: 'Courier New', Courier, monospace; transition: all 0.3s;
-            width: 80%; max-width: 400px; display: block; border-radius: 10px;
+            flex: 0 0 75%; scroll-snap-align: center; border-radius: 15px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
-        .difficulty-btn:hover { transform: scale(1.05); }
+        .difficulty-btn:hover { transform: scale(1.02); }
         
         .btn-easy { border-color: lime; color: lime; }
-        .btn-easy:hover, .btn-easy:active { background: lime; color: black; }
+        .btn-easy:active { background: lime; color: black; }
         
         .btn-medium { border-color: yellow; color: yellow; }
-        .btn-medium:hover, .btn-medium:active { background: yellow; color: black; }
+        .btn-medium:active { background: yellow; color: black; }
         
         .btn-hard { border-color: orange; color: orange; }
-        .btn-hard:hover, .btn-hard:active { background: orange; color: black; }
+        .btn-hard:active { background: orange; color: black; }
 
         .btn-granny { border-color: #ff0000; color: #ff0000; background: #220000; font-weight: bold; animation: pulseRed 2s infinite; }
-        .btn-granny:hover, .btn-granny:active { background: #ff0000; color: white; box-shadow: 0 0 30px red; }
+        .btn-granny:active { background: #ff0000; color: white; box-shadow: 0 0 30px red; }
 
         .btn-debug { border-color: #00ffff; color: #00ffff; border-style: dashed; }
-        .btn-debug:hover, .btn-debug:active { background: #00ffff; color: black; }
 
         @keyframes pulseRed { 0% { box-shadow: 0 0 5px #550000; } 50% { box-shadow: 0 0 20px #ff0000; } 100% { box-shadow: 0 0 5px #550000; } }
 
@@ -155,7 +144,7 @@
         #crosshair {
             position: absolute; top: 50%; left: 50%; width: 8px; height: 8px;
             background: white; border-radius: 50%; transform: translate(-50%, -50%);
-            opacity: 0.8; pointer-events: none; z-index: 5; display: none; /* Oculto inicio */
+            opacity: 0.8; pointer-events: none; z-index: 5; display: none;
             border: 1px solid black;
         }
 
@@ -169,13 +158,11 @@
         }
         .chococat-speak { color: #ff3333; border-color: #ff3333 !important; }
         .kuromi-speak { color: #dda0dd; border-color: #800080 !important; font-family: cursive; }
-        .kuromi-love-speak { color: #ff69b4; border-color: #ff1493 !important; font-family: cursive; font-weight: bold; text-shadow: 0 0 5px #ff1493; background: rgba(50, 0, 30, 0.8) !important;}
         .melody-speak { color: #ffb7c5; border-color: #ff69b4 !important; font-family: 'Comic Sans MS', cursive, sans-serif; font-style: italic; }
         .molang-speak { color: #ffffff; border-color: #ffffff !important; font-family: 'Comic Sans MS', cursive, sans-serif; font-weight: bold; background: rgba(255, 150, 200, 0.4) !important; text-shadow: 1px 1px 2px #ff69b4; }
         .love-speak { color: #ff00ff; border-color: #ff00ff !important; font-style: italic; }
         .rage-speak { color: #990000; border-color: #ff0000 !important; font-size: 30px; border-width: 5px !important; }
         .sad-speak { color: #8888ff; border-color: #0000ff !important; font-style: italic; font-size: 20px; }
-        .kitty-speak { color: #ff69b4; border-color: #ff69b4 !important; font-family: 'Arial Rounded MT Bold', sans-serif; }
         .system-speak { color: #ffff00; border-color: #ffff00 !important; }
         .abduct-speak { color: #aa00aa; border-color: #aa00aa !important; font-size: 28px; background: #000 !important; }
         .final-speak { color: #ff0000; border-color: #000 !important; font-size: 40px; text-shadow: 0 0 10px red; background: transparent !important; }
@@ -201,11 +188,6 @@
         #jumpscare p, #win-screen p { font-size: 20px; cursor: pointer; text-decoration: underline; margin-top: 20px;}
         
         /* --- EFECTOS VISUALES --- */
-        #kitty-overlay {
-            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 105, 180, 0.2); pointer-events: none; z-index: 4;
-            justify-content: center; align-items: center; color: #ff69b4; font-size: 50px; font-weight: bold;
-        }
         #love-overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             box-shadow: inset 0 0 100px #ff00ff; pointer-events: none; z-index: 3;
@@ -222,20 +204,7 @@
         }
         @keyframes pulseLove { 0% { opacity: 0.3; } 50% { opacity: 0.8; } 100% { opacity: 0.3; } }
 
-        /* --- UI PROMOCIONAL VIDEOCLIP --- */
-        #video-prompt {
-            display: none; position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
-            text-align: center; background: rgba(80, 0, 80, 0.85); border: 4px solid #ff69b4; 
-            padding: 20px; width: 85%; max-width: 500px; z-index: 15; border-radius: 15px; box-shadow: 0 0 30px #ff1493;
-            font-family: 'Courier New', monospace;
-        }
-        #video-prompt h2 { color: #ffb7c5; margin-top: 0; font-size: 28px; text-shadow: 2px 2px 4px black; }
-        #video-prompt p { color: white; font-size: 18px; font-weight: bold; }
-        #video-prompt .highlight { color: yellow; font-size: 18px; margin-top: 15px; animation: pulseAlert 1s infinite alternate; }
-        .prompt-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
-        .prompt-buttons button { padding: 15px 25px; font-weight: bold; font-size: 18px; border-radius: 10px; border: none; cursor: pointer; pointer-events: auto; }
-
-        /* --- AJUSTES MÓVILES (PANTALLA PEQUEÑA Y RESPONSIVE) --- */
+        /* --- AJUSTES MÓVILES --- */
         @media (max-width: 768px) {
             #status { font-size: 18px; }
             #objective { font-size: 16px; }
@@ -243,20 +212,12 @@
             #controls { font-size: 10px; line-height: 1.2; }
             .action-btn { width: 55px; height: 55px; font-size: 24px; }
             #dialogue-box { font-size: 16px; bottom: 100px; width: 95%; padding: 10px; }
-            #kitty-status, #kuromi-status, #melody-status, #molang-status { font-size: 12px; margin-top: 2px;}
+            #kuromi-status, #melody-status, #molang-status { font-size: 12px; margin-top: 2px;}
             .alert-box { font-size: 12px; padding: 10px; width: 250px;}
             #mobile-controls { bottom: 15px; right: 15px; gap: 10px; }
             #joystick-base { width: 100px; height: 100px; }
             #joystick-stick { width: 40px; height: 40px; top: 30px; left: 30px; }
-            #start-screen h1 { font-size: 12vw; margin-bottom: 20px; }
-            .difficulty-btn { font-size: 16px; padding: 10px 15px; width: 90%; margin: 5px auto; }
-            #video-prompt { width: 90%; padding: 15px; top: 5%; }
-            #video-prompt h2 { font-size: 22px; }
-            #video-prompt p { font-size: 14px; }
-            .prompt-buttons button { padding: 10px 15px; font-size: 16px; }
-            #legacy-prompt h1 { font-size: 28px; }
-            #legacy-prompt p { font-size: 14px; max-width: 95%; }
-            .legacy-btn { padding: 12px 20px; font-size: 16px; }
+            .difficulty-btn { font-size: 18px; padding: 10px; flex: 0 0 85%; }
         }
     </style>
     <script type="importmap">
@@ -270,48 +231,30 @@
     </script>
 </head>
 <body>
-    <!-- AVISO DE MODO LEGACY -->
-    <div id="legacy-prompt">
-        <h1>⚠️ AVISO DE RENDIMIENTO ⚠️</h1>
-        <p>Hemos detectado que juegas desde un dispositivo móvil o de gama baja.<br><br>Para evitar que el juego se trabe o tu celular se caliente, te sugerimos activar la <b>Legacy Edition</b>. Esto apagará las sombras y luces pesadas, pero el juego seguirá siendo exactamente igual.</p>
-        <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
-            <button class="legacy-btn legacy-btn-yes" onclick="acceptLegacy()">ACTIVAR MODO LEGACY</button>
-            <button class="legacy-btn legacy-btn-no" onclick="rejectLegacy()">Ignorar y Jugar Normal</button>
-        </div>
-    </div>
-
     <div id="start-screen">
         <h1 style="font-size: 10vw;">ESCAPE:<br>CHOCOCAT'S RAGE</h1>
-        <p>Selecciona tu dificultad</p>
-        <button class="difficulty-btn btn-easy" onclick="setDifficulty('easy')">
-            FÁCIL<br><span style="font-size:14px">Son lentos y ciegos</span>
-        </button>
-        <button class="difficulty-btn btn-medium" onclick="setDifficulty('medium')">
-            NORMAL<br><span style="font-size:14px">Experiencia estándar</span>
-        </button>
-        <button class="difficulty-btn btn-hard" onclick="setDifficulty('hard')">
-            DIFÍCIL<br><span style="font-size:14px">Corren rápido y te ven bien</span>
-        </button>
-        <button class="difficulty-btn btn-granny" onclick="setDifficulty('granny')">
-            MODO GRANNY<br><span style="font-size:14px">¡OÍDO ABSOLUTO + OSCURIDAD!</span>
-        </button>
-        <button class="difficulty-btn btn-debug" onclick="setDifficulty('debug')">
-            MODO PRUEBAS<br><span style="font-size:14px">Debug IA y Físicas</span>
-        </button>
-    </div>
-
-    <!-- UI DEL VIDEOCLIP -->
-    <div id="video-prompt">
-        <h2>🎬 ¡ESTRENO MUNDIAL! 🎬</h2>
-        <p>Kuromi y Chococat quieren mostrarte su nuevo videoclip musical exclusivo.</p>
-        <div class="prompt-buttons">
-            <button onclick="triggerVideoAccept()" style="background:lime; color:black;">¡ACEPTAR!</button>
-            <button onclick="triggerVideoReject()" style="background:red; color:white;">RECHAZAR</button>
+        <p style="font-size: 16px; margin-bottom: 10px;">← Desliza para elegir dificultad →</p>
+        
+        <!-- Carrusel de Dificultades -->
+        <div id="menu-container">
+            <button class="difficulty-btn btn-easy" onmouseenter="playHoverSound()" onclick="setDifficulty('easy')">
+                FÁCIL<br><span style="font-size:14px; margin-top:10px;">Son lentos y ciegos</span>
+            </button>
+            <button class="difficulty-btn btn-medium" onmouseenter="playHoverSound()" onclick="setDifficulty('medium')">
+                NORMAL<br><span style="font-size:14px; margin-top:10px;">Experiencia estándar</span>
+            </button>
+            <button class="difficulty-btn btn-hard" onmouseenter="playHoverSound()" onclick="setDifficulty('hard')">
+                DIFÍCIL<br><span style="font-size:14px; margin-top:10px;">Corren rápido y te ven bien</span>
+            </button>
+            <button class="difficulty-btn btn-granny" onmouseenter="playHoverSound()" onclick="setDifficulty('granny')">
+                MODO GRANNY<br><span style="font-size:14px; margin-top:10px;">¡OÍDO ABSOLUTO + OSCURIDAD!</span>
+            </button>
+            <button class="difficulty-btn btn-debug" onmouseenter="playHoverSound()" onclick="setDifficulty('debug')">
+                MODO PRUEBAS<br><span style="font-size:14px; margin-top:10px;">Debug IA y Físicas</span>
+            </button>
         </div>
-        <p class="highlight" id="video-keys-hint">También puedes pulsar [Y] o [N]</p>
     </div>
 
-    <div id="kitty-overlay"></div>
     <div id="love-overlay"></div>
     <div id="rage-overlay"></div>
     <div id="ignore-vignette"></div>
@@ -332,7 +275,6 @@
     </div>
     
     <div id="mobile-controls">
-        <div class="action-btn" id="btn-kitty">💖</div>
         <div class="action-btn" id="btn-throw">📦</div>
         <div class="action-btn" id="btn-light">💡</div>
         <div class="action-btn" id="btn-run">🏃</div>
@@ -344,7 +286,6 @@
         <div id="stealth-indicator" style="color: lime">👁️ OCULTO</div>
         <div id="objective">LLAVES: 0/3 🗝️</div>
         <div id="grace-period">🛡 INMUNIDAD 🛡</div>
-        <div id="kitty-status">💖 HELLO KITTY: PATRULLANDO</div>
         <div id="kuromi-status">😈 KUROMI: PATRULLANDO</div>
         <div id="melody-status">🌸 MY MELODY: PASEANDO</div>
         <div id="molang-status">🐰 MOLANG: SALTANDO</div>
@@ -352,7 +293,6 @@
             WASD: Mover | SHIFT: Correr/Sigilo | F: Linterna<br>
             L: Luz Emergencia | <b>C: Comer</b><br>
             CLICK: Tirar Caja | <b>G: Dormir (En cama)</b><br>
-            <b>E: Llamar a Hello Kitty</b>
         </div>
         <div id="debug-controls">
             <b>MODO DEBUG:</b><br>
@@ -379,6 +319,20 @@
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import * as CANNON from 'cannon-es';
 
+        // --- SISTEMA DE ARRASTRE DE MENÚ (Para PC sin pantalla táctil) ---
+        const slider = document.getElementById('menu-container');
+        let isDown = false; let startX; let scrollLeft;
+        slider.addEventListener('mousedown', (e) => { isDown = true; startX = e.pageX - slider.offsetLeft; scrollLeft = slider.scrollLeft; });
+        slider.addEventListener('mouseleave', () => { isDown = false; });
+        slider.addEventListener('mouseup', () => { isDown = false; });
+        slider.addEventListener('mousemove', (e) => {
+            if(!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2;
+            slider.scrollLeft = scrollLeft - walk;
+        });
+
         // --- SCENE SETUP ---
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x000000, 0.008); 
@@ -387,7 +341,7 @@
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true; // Por defecto encendido, se apaga en modo Legacy
+        renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
         const world = new CANNON.World();
@@ -396,65 +350,85 @@
         const slipContact = new CANNON.ContactMaterial(slipMat, slipMat, { friction: 0.0, restitution: 0.0 });
         world.addContactMaterial(slipContact);
 
-        // --- AUDIO ---
+        // --- AUDIO Y LATIDOS ---
         const listener = new THREE.AudioListener();
         camera.add(listener);
-        const osc = listener.context.createOscillator();
-        const gain = listener.context.createGain();
-        osc.connect(gain); gain.connect(listener.context.destination);
-        osc.type = 'sawtooth'; osc.frequency.value = 50; gain.gain.value = 0;
-        osc.start();
+        let heartbeatTimer = 0;
 
-        // --- DETECCIÓN MÓVIL Y GAMA BAJA ---
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        let isLegacyMode = false;
-
-        // Mostrar aviso de Legacy Edition automáticamente en móviles o si detectamos pocos recursos
-        const checkPerformanceWarning = () => {
-            const hardwareCores = navigator.hardwareConcurrency || 4;
-            const deviceRAM = navigator.deviceMemory || 4;
-            
-            if (isMobile || hardwareCores <= 4 || deviceRAM <= 4) {
-                document.getElementById('legacy-prompt').style.display = 'flex';
-            }
-        };
-
-        window.acceptLegacy = () => {
-            isLegacyMode = true;
-            document.getElementById('legacy-prompt').style.display = 'none';
-            
-            // Aplicar recortes de gráficos de inmediato
-            renderer.shadowMap.enabled = false;
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 0.7)); // Resolución reducida
-            
-            // Apagar las luces de las llaves si ya se crearon
-            keyLights.forEach(l => { if (l && l.parent) l.parent.remove(l); });
-            keyLights.length = 0;
-            
-            notify("LEGACY EDITION: Activada. ¡Mejor rendimiento!", "success");
-        };
-
-        window.rejectLegacy = () => {
-            document.getElementById('legacy-prompt').style.display = 'none';
-            notify("MODO NORMAL: Gráficos altos seleccionados", "warning");
-        };
-
-        // --- GESTIÓN DE DIFICULTAD ---
-        let gameStarted = false;
-        let difficultySettings = {
-            speedMultiplier: 1.0,
-            detectionRadius: 100,
-            lonelinessRate: 1.0,
-            aggroPersistence: 5.0,
-            keysRequired: 3,
-            hearFootsteps: false,
-            debug: false
-        };
-
-        window.setDifficulty = (mode) => {
+        function unlockAudio() {
             if (listener.context.state === 'suspended') {
                 listener.context.resume();
             }
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
+            document.removeEventListener('mousemove', unlockAudio);
+        }
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
+        document.addEventListener('mousemove', unlockAudio);
+
+        window.playHoverSound = () => {
+            const ctx = listener.context;
+            if(ctx.state !== 'running') return;
+            const hoverOsc = ctx.createOscillator();
+            const hoverGain = ctx.createGain();
+            hoverOsc.connect(hoverGain); hoverGain.connect(ctx.destination);
+            hoverOsc.type = 'sine';
+            hoverOsc.frequency.setValueAtTime(800, ctx.currentTime);
+            hoverGain.gain.setValueAtTime(0.05, ctx.currentTime);
+            hoverGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+            hoverOsc.start(ctx.currentTime); hoverOsc.stop(ctx.currentTime + 0.1);
+        };
+
+        function playHeartbeat(vol, state, lonelinessVal) {
+            const ctx = listener.context;
+            if(ctx.state !== 'running') return;
+            const t = ctx.currentTime;
+
+            const hbOsc = ctx.createOscillator();
+            const hbGain = ctx.createGain();
+            hbOsc.connect(hbGain); hbGain.connect(ctx.destination);
+
+            let baseFreq = 50 + (lonelinessVal * 2); 
+            if(state === AI_STATE.LOVE_CHASE) baseFreq = 90;
+            if(state === AI_STATE.RAGE) baseFreq = 40;
+
+            hbOsc.type = 'sine';
+            hbOsc.frequency.setValueAtTime(baseFreq, t);
+            hbOsc.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, t + 0.1);
+
+            hbGain.gain.setValueAtTime(0, t);
+            hbGain.gain.linearRampToValueAtTime(vol * 2.0, t + 0.02);
+            hbGain.gain.linearRampToValueAtTime(0, t + 0.1);
+
+            hbGain.gain.setValueAtTime(0, t + 0.15);
+            hbGain.gain.linearRampToValueAtTime(vol * 2.0, t + 0.17);
+            hbGain.gain.linearRampToValueAtTime(0, t + 0.3);
+
+            hbOsc.start(t);
+            hbOsc.stop(t + 0.35);
+        }
+
+        // --- DETECCIÓN MÓVIL ---
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        // --- GESTIÓN DE DIFICULTAD ---
+        let gameStarted = false;
+        let difficultySettings = { speedMultiplier: 1.0, detectionRadius: 100, lonelinessRate: 1.0, aggroPersistence: 5.0, keysRequired: 3, hearFootsteps: false, debug: false };
+
+        window.setDifficulty = (mode) => {
+            if (listener.context.state === 'suspended') listener.context.resume();
+
+            const ctx = listener.context;
+            const clickOsc = ctx.createOscillator();
+            const clickGain = ctx.createGain();
+            clickOsc.connect(clickGain); clickGain.connect(ctx.destination);
+            clickOsc.type = 'square';
+            clickOsc.frequency.setValueAtTime(400, ctx.currentTime);
+            clickOsc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.1);
+            clickGain.gain.setValueAtTime(0.1, ctx.currentTime);
+            clickGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+            clickOsc.start(ctx.currentTime); clickOsc.stop(ctx.currentTime + 0.3);
 
             const screen = document.getElementById('start-screen');
             screen.style.display = 'none';
@@ -464,9 +438,7 @@
             if (isMobile) {
                 document.getElementById('mobile-controls').style.display = 'grid';
                 document.getElementById('controls').innerHTML = "Usa el joystick (izq) y la pantalla (der) para mirar.<br>Toca los botones para acciones.";
-                document.getElementById('video-keys-hint').style.display = 'none';
                 
-                // Forzar pantalla completa para ocultar barras del navegador
                 const docEl = document.documentElement;
                 if (docEl.requestFullscreen) docEl.requestFullscreen().catch(e => console.warn(e));
                 else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
@@ -540,17 +512,30 @@
             start: { es: "Busca las llaves...", en: "Find the keys..." },
             found: { es: "¡TE ENCONTRÉ!", en: "FOUND YOU!" },
             grow: { es: "¡ESTÁ CRECIENDO!", en: "IT'S GROWING!" },
-            kitty_help: { es: "¡Corre ahora!", en: "Run now!" },
             lost_player: { es: "¿A dónde fuiste?", en: "Where did you go?" }, 
             
             love_start: { es: "¡Mis cálculos indican que me amas!", en: "My calculations indicate you love me!" },
             love_chase_1: { es: "¡Tus signos vitales se aceleran al mirarme!", en: "Your vital signs spike when you look at me!" },
             love_chase_2: { es: "¡Físicamente no puedes escapar de mi amor!", en: "You physically cannot escape my love!" },
             
-            k_love_start: { es: "¡N-No me mires tanto, tonto!", en: "D-Don't stare at me, dummy!" },
-            k_love_chase: { es: "¡V-Ven aquí! ¡Solo te daré un abrazo!", en: "C-Come here! I'll just give you a hug!" },
-            k_love_catch: { es: "¡Mío! Digo... ¡Te atrapé!", en: "Mine! I mean... Caught you!" },
+            k_intro: { es: "¿Crees que puedes ganar?", en: "Think you can win?" },
+            k_mischief: { es: "¡Ups! Moví tu llave ji ji ji", en: "Oops! Moved your key hee hee" },
+            k_question_1: { es: "¿Chococat es lindo, verdad?", en: "Chococat is cute, right?" },
+            k_question_2: { es: "¿Tienes miedo?", en: "Are you scared?" },
+            k_mess: { es: "¡Qué desorden!", en: "What a mess!" },
+            k_shoo: { es: "¡Vete de aquí Melody!", en: "Go away Melody!" },
+            k_distract: { es: "¡Oye rarito! ¡Mira el desastre que hice por allá! ¡Jajaja!", en: "Hey weirdo! Look at the mess I made over there! Hahaha!" },
+            k_distract_success: { es: "¡Ups! ¡Te choqué gatito! ¡Huye mientras puedes!", en: "Oops! Bumped into you kitty! Run while you can!" },
             
+            m_hi: { es: "¡Hola! ¿Quieres ser mi amigo?", en: "Hi! Wanna be friends?" },
+            m_follow: { es: "¡Te acompaño! Es peligroso...", en: "I'll go with you! It's dangerous..." },
+            m_scared: { es: "¡Ay! ¡Kuromi da miedo!", en: "Eek! Kuromi is scary!" },
+            m_humming: { es: "La la la ~ 🎵", en: "La la la ~ 🎵" },
+            m_give_repellent: { es: "¡Toma este escudo protector! Te cuidará un ratito~🌸", en: "Take this protective shield! It'll keep you safe for a bit~🌸" },
+
+            c_repellent_rage: { es: "¡¿Un campo de fuerza?! ¡Esa variable rompe mis ecuaciones! ¡INACEPTABLE!", en: "A force field?! That variable breaks my equations! UNACCEPTABLE!" },
+            c_repellent_search: { es: "Anomalía detectada. El objetivo desapareció del radar... ¡Aumentando velocidad de escaneo!", en: "Anomaly detected. Target vanished from radar... Increasing scan speed!" },
+
             ignore_1: { es: "¿Por qué me ignoras?", en: "Why do you ignore me?" },
             ignore_2: { es: "¡MÍRAME!", en: "LOOK AT ME!" },
             ignore_punish: { es: "¡NO ME DES LA ESPALDA!", en: "DON'T TURN YOUR BACK ON ME!" },
@@ -566,32 +551,6 @@
             door_locked: { es: "Necesito más llaves...", en: "Need more keys..." },
             key_found: { es: "¡Llave encontrada!", en: "Key found!" },
             
-            k_intro: { es: "¿Crees que puedes ganar?", en: "Think you can win?" },
-            k_mischief: { es: "¡Ups! Moví tu llave ji ji ji", en: "Oops! Moved your key hee hee" },
-            k_question_1: { es: "¿Chococat es lindo, verdad?", en: "Chococat is cute, right?" },
-            k_question_2: { es: "¿Tienes miedo?", en: "Are you scared?" },
-            k_mess: { es: "¡Qué desorden!", en: "What a mess!" },
-            k_shoo: { es: "¡Vete de aquí Melody!", en: "Go away Melody!" },
-            k_chase_melody: { es: "¡Deja de seguirlo!", en: "Stop following him!" },
-            k_punished: { es: "¡Ay! ¡Perdón Kitty!", en: "Ouch! Sorry Kitty!" },
-            
-            m_hi: { es: "¡Hola! ¿Quieres ser mi amigo?", en: "Hi! Wanna be friends?" },
-            m_follow: { es: "¡Te acompaño! Es peligroso...", en: "I'll go with you! It's dangerous..." },
-            m_scared: { es: "¡Ay! ¡Kuromi da miedo!", en: "Eek! Kuromi is scary!" },
-            m_found_key: { es: "¿Buscas esto?", en: "Looking for this?" },
-            m_humming: { es: "La la la ~ 🎵", en: "La la la ~ 🎵" },
-
-            m_paws_notice: { es: "¿Estabas mirando mis patitas rosadas? ¡Qué lindo de tu parte! ~ 🌸", en: "Were you looking at my pink paws? That's so sweet! ~ 🌸" },
-            m_paws_ignore_1: { es: "¡Espérame por fiiiis! ¿No quieres tomar el té conmigo? ☕", en: "Wait for me pleeease! Don't you want to have tea with me? ☕" },
-            m_paws_ignore_2: { es: "¡Oye! ¡Horneé galletitas de almendra para ti! ¡Mírame! 🍪", en: "Hey! I baked almond cookies for you! Look at me! 🍪" },
-            m_paws_ignore_3: { es: "¡NO ME IGNORES! ¡Las patitas de Melody son las más suavecitas del mundo! 🌸", en: "DON'T IGNORE ME! Melody's paws are the softest in the world! 🌸" },
-            m_paws_happy: { es: "¡Ji ji! ¡Sabía que querías verlas! Eres un buen amigo. ~ 💖", en: "Hee hee! I knew you wanted to see them! You're a good friend. ~ 💖" },
-
-            hk_fan: { es: "¡Eres tú! ¡Soy tu fan #1!", en: "It's you! I'm your #1 fan!" },
-            hk_lost: { es: "¿DÓNDE ESTÁS? ¡NO TE VAYAS!", en: "WHERE ARE YOU? DON'T LEAVE!" },
-            hk_angry_k: { es: "¡KUROMI! ¡DEJA A MELODY!", en: "KUROMI! LEAVE MELODY ALONE!" },
-            hk_hug: { es: "¡Abrazo!", en: "Hug!" },
-
             mo_hi: { es: "¡Piu piu! (¡Amigo!)", en: "Piu piu! (Friend!)" },
             mo_hug: { es: "¡Ta da! (¡Abrazo!)", en: "Ta da! (Hug!)" },
             mo_food: { es: "¡Ko ko! (¡Comida!)", en: "Ko ko! (Food!)" },
@@ -601,16 +560,7 @@
             sleep_join: { es: "Dormiré contigo...", en: "I will sleep with you..." },
             wake_rage: { es: "¿ME QUERÍAS DEJAR SOLO?", en: "DID YOU WANT TO LEAVE ME ALONE?" },
             wake_stealth: { es: "Zzz... te quiero... Zzz...", en: "Zzz... love you... Zzz..." },
-            whiskers_sense: { es: "Mis bigotes sienten tus pasos...", en: "My whiskers feel your steps..." },
-            whiskers_catch: { es: "¡Sabía que irías por ahí!", en: "I knew you'd go there!" },
-            noise: { es: "¿Qué fue ese ruido?", en: "What was that noise?" },
-
-            // DIÁLOGOS DEL VIDEOCLIP
-            mv_offer: { es: "¡Oye! Chococat y yo hicimos un videoclip increíble. ¿Quieres verlo?", en: "Hey! Chococat and I made an awesome music video. Wanna watch?" },
-            mv_accept_k: { es: "¡Jeje! ¡Sabía que tendrías buen gusto musical!", en: "Hehe! I knew you had good musical taste!" },
-            mv_accept_c: { es: "¡Excelente! Procesando métricas de audiencia y acústica perfecta...", en: "Excellent! Processing audience metrics and perfect acoustics..." },
-            mv_reject_k: { es: "¡¿Acaso no aprecias el verdadero arte vocal?! ¡TE VAS A ARREPENTIR!", en: "Don't you appreciate true vocal art?! YOU WILL REGRET THIS!" },
-            mv_reject_c: { es: "¡Mis algoritmos predijeron un 99% de aceptación! ¡Fallo crítico! ¡INICIANDO VENGANZA!", en: "My algorithms predicted 99% acceptance! Critical failure! INITIATING REVENGE!" },
+            noise: { es: "¡Anomalía acústica detectada! ¡Voy para allá!", en: "Acoustic anomaly detected! Heading there!" },
         };
 
         function showDialogue(key, type = 'system-speak') {
@@ -641,8 +591,14 @@
         let projectileCameraMode = false; 
         let lastProjectile = null; 
 
-        let musicVideoOffered = false;
-        let musicVideoPromptActive = false;
+        // Escudo Melody
+        let immuneTimer = 0;
+        let melodyCooldown = 0;
+        let kuromiDistractCooldown = 0;
+        
+        // Raycaster global para IA
+        const moveRaycaster = new THREE.Raycaster();
+        const raycaster = new THREE.Raycaster();
 
         // --- VISUALIZACIÓN DEBUG ---
         const debugLineMat = new THREE.LineBasicMaterial({ color: 0xff0000 });
@@ -800,16 +756,12 @@
         bedBody.position.copy(bedMesh.position);
         world.addBody(bedBody);
 
-        // LLAVES (Actualizado para prevenir pérdida de rendimiento en Legacy Mode)
+        // LLAVES
         const keyItems = [];
-        const keyLights = [];
         const keyGeo = new THREE.TorusKnotGeometry(0.5, 0.2, 64, 8);
         const keyMat = new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xaa4400 });
-        
         function spawnKeys() {
             keyItems.forEach(k => scene.remove(k)); keyItems.length = 0;
-            keyLights.forEach(l => scene.remove(l)); keyLights.length = 0; // Previene un leak de luces de versiones anteriores
-            
             for(let i=0; i<totalKeys; i++) {
                 let kx = (Math.random() - 0.5) * (MAP_SIZE - 40); 
                 let kz = (Math.random() - 0.5) * (MAP_SIZE - 40);
@@ -819,21 +771,9 @@
                     if (Math.random() > 0.5) { kx = 60 + (Math.random()-0.5)*30; kz = 60 + (Math.random()-0.5)*30; ky = 9.5; }
                     else { kx = -60 + (Math.random()-0.5)*30; kz = -60 + (Math.random()-0.5)*30; ky = 9.5; }
                 }
-                const key = new THREE.Mesh(keyGeo, keyMat); 
-                key.position.set(kx, ky, kz);
-                
-                if (isLegacyMode) {
-                    // En modo Legacy la llave brilla por si sola sin emitir luz al entorno
-                    key.material = keyMat.clone();
-                    key.material.emissiveIntensity = 2.0;
-                } else {
-                    const kl = new THREE.PointLight(0xffaa00, 1, 10); 
-                    kl.position.copy(key.position); 
-                    scene.add(kl);
-                    keyLights.push(kl);
-                }
-                
+                const key = new THREE.Mesh(keyGeo, keyMat); key.position.set(kx, ky, kz);
                 scene.add(key); keyItems.push(key);
+                const kl = new THREE.PointLight(0xffaa00, 1, 10); kl.position.copy(key.position); scene.add(kl);
             }
         }
         function respawnKeys() { spawnKeys(); }
@@ -860,26 +800,6 @@
 
         // --- MODELOS ---
         const loader = new GLTFLoader();
-
-        // HELLO KITTY
-        let kittyMesh; let kittyBody;
-        kittyMesh = new THREE.Group();
-        const kittyGeo = new THREE.CylinderGeometry(0.5, 0.5, 2, 32);
-        const kittyMat = new THREE.MeshStandardMaterial({ color: 0xff69b4, emissive: 0xff1493 });
-        const kPlaceholder = new THREE.Mesh(kittyGeo, kittyMat);
-        kittyMesh.add(kPlaceholder);
-        scene.add(kittyMesh);
-        
-        loader.load('HelloKitty.glb', function(gltf){
-             kittyMesh.remove(kPlaceholder); 
-             const model = gltf.scene;
-             model.scale.set(1.4, 1.4, 1.4);
-             model.traverse((c) => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-             kittyMesh.add(model); 
-        }, undefined, function(e){ console.log("Kitty Default"); });
-
-        kittyBody = new CANNON.Body({ mass: 10, shape: new CANNON.Sphere(1), position: new CANNON.Vec3(-10, 5, -10), fixedRotation: true, material: slipMat, linearDamping: 0.1 });
-        world.addBody(kittyBody);
 
         // MY MELODY
         let melodyMesh; let melodyBody;
@@ -965,14 +885,11 @@
         molangBody = new CANNON.Body({ mass: 10, shape: new CANNON.Sphere(0.9), position: new CANNON.Vec3(0, 5, -40), fixedRotation: true, material: slipMat, linearDamping: 0.1 });
         world.addBody(molangBody);
 
-        // Llamar a la comprobación de rendimiento nada más iniciar
-        checkPerformanceWarning();
-
         // --- IA & LOGICA ---
         const AI_STATE = { 
             SEARCH: 0, SUSPICION: 1, CHASE: 2, STUNNED: 3, INVESTIGATE_LAST_SEEN: 4, 
             LOVE_CHASE: 5, BEGGING_FOOD: 6, RAGE: 7, ABDUCTING: 8, SURVEILLANCE: 9, 
-            SLEEPING: 10, BED_SHOCK: 11, WAITING_VIDEO_RESPONSE: 12
+            SLEEPING: 10, BED_SHOCK: 11
         };
         let currentState = AI_STATE.SEARCH;
         let targetPosition = new THREE.Vector3(); let lastKnownPosition = new THREE.Vector3(); 
@@ -980,55 +897,22 @@
         let stuckTimer = 0; let lostSightTimer = 0;
         let stunTimer = 0; let surveillanceTimer = 0;
         let lastCatPos = new THREE.Vector3();
-        const raycaster = new THREE.Raycaster();
         let frustration = 0; let gazeTime = 0; let loneliness = 0; const LOVE_THRESHOLD = 3.0; let isLoveMode = false;
-        let kGazeTime = 0; let isKuromiLoveMode = false;
-        
-        let mGazeTime = 0; let mIgnoreTimer = 0; // Variables para My Melody
         
         let flags = { lonelinessLow: false, lonelinessHigh: false, zoneWarn: false, loveWarn: false, escapeWarn: false, noiseWarn: false };
         let isEating = false; let eatingTimer = 0; let begTimer = 0;
 
         // IA KUROMI
-        const K_STATE = { PATROL: 0, INTERROGATE: 1, MISCHIEF: 2, FLEE: 3, CHASE_MELODY: 4, LOVE_CHASE: 5, MUSIC_PROMPT: 6, REJECTED_RAGE: 7 };
+        const K_STATE = { PATROL: 0, INTERROGATE: 1, MISCHIEF: 2, FLEE: 3, CHASE_MELODY: 4, DISTRACT_CHOCOCAT: 5 };
         let kuromiState = K_STATE.PATROL; let kuromiTarget = new THREE.Vector3(); let kuromiTimer = 0;
 
         // IA MY MELODY
-        const M_STATE = { WANDER: 0, FOLLOW: 1, FLEE_KUROMI: 2, PERSISTENT_FOLLOW: 3 };
+        const M_STATE = { WANDER: 0, FOLLOW: 1, FLEE_KUROMI: 2 };
         let melodyState = M_STATE.WANDER; let melodyTarget = new THREE.Vector3(); let melodyTimer = 0;
-
-        // IA HELLO KITTY
-        const HK_STATE = { WANDER: 0, FAN_CHASE: 1, FIERCE_SEARCH: 2, PROTECT_MELODY: 3 };
-        let kittyState = HK_STATE.WANDER; let kittyTarget = new THREE.Vector3();
 
         // IA MOLANG
         const MO_STATE = { WANDER: 0, FOLLOW: 1, EATING: 2 };
         let molangState = MO_STATE.WANDER; let molangTarget = new THREE.Vector3();
-
-        // --- SISTEMA DE VIDEOCLIP ---
-        window.triggerVideoAccept = () => {
-            musicVideoPromptActive = false;
-            document.getElementById('video-prompt').style.display = 'none';
-            showDialogue('mv_accept_k', 'kuromi-speak');
-            setTimeout(() => showDialogue('mv_accept_c', 'chococat-speak'), 3000);
-            notify("¡LES ENCANTÓ QUE LO VIERAS!", "success");
-            
-            kuromiState = K_STATE.PATROL;
-            currentState = AI_STATE.STUNNED; // Chococat baila
-            stunTimer = 5.0;
-        };
-
-        window.triggerVideoReject = () => {
-            musicVideoPromptActive = false;
-            document.getElementById('video-prompt').style.display = 'none';
-            showDialogue('mv_reject_k', 'kuromi-speak');
-            setTimeout(() => showDialogue('mv_reject_c', 'rage-speak'), 3000);
-            notify("¡GRAVE ERROR! LOS OFENDISTE", "danger");
-            
-            kuromiState = K_STATE.REJECTED_RAGE;
-            currentState = AI_STATE.RAGE;
-            frustration += 5; evolve();
-        };
 
         function evolve() {
             frustration++;
@@ -1039,21 +923,45 @@
             notify("¡HA EVOLUCIONADO!", "danger");
         }
 
-        function moveBody(body, target, speed) {
+        // --- SISTEMA DE NAVEGACIÓN INTELIGENTE (EVITAR ATASCOS) ---
+        function smartMoveBody(body, target, speed, scale = 1.0) {
             const pos = body.position;
-            const dir = new THREE.Vector3(target.x - pos.x, 0, target.z - pos.z).normalize();
+            const pos3 = new THREE.Vector3(pos.x, pos.y, pos.z);
+            let dir = new THREE.Vector3(target.x - pos.x, 0, target.z - pos.z);
+            
+            if (dir.lengthSq() < 0.1) {
+                body.velocity.x = 0; body.velocity.z = 0; return;
+            }
+            dir.normalize();
+
+            // Antenas virtuales para evitar chocar de frente con paredes
+            const feelerLen = 6 * scale;
+            moveRaycaster.set(pos3, dir);
+            let hits = moveRaycaster.intersectObjects(walls);
+
+            if (hits.length > 0 && hits[0].distance < feelerLen) {
+                let dirRight = dir.clone().applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI/3);
+                moveRaycaster.set(pos3, dirRight);
+                let hitsRight = moveRaycaster.intersectObjects(walls);
+                
+                let dirLeft = dir.clone().applyAxisAngle(new THREE.Vector3(0,1,0), -Math.PI/3);
+                moveRaycaster.set(pos3, dirLeft);
+                let hitsLeft = moveRaycaster.intersectObjects(walls);
+
+                let rightDist = hitsRight.length > 0 ? hitsRight[0].distance : feelerLen;
+                let leftDist = hitsLeft.length > 0 ? hitsLeft[0].distance : feelerLen;
+
+                if (rightDist > leftDist) {
+                    dir = dirRight; 
+                } else if (leftDist > rightDist) {
+                    dir = dirLeft; 
+                } else {
+                    dir.applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI/1.5); 
+                }
+            }
+
             body.velocity.x = dir.x * speed;
             body.velocity.z = dir.z * speed;
-        }
-
-        function summonHelloKitty() {
-            if (!kittyMesh || !kittyBody || !gameStarted) return;
-            kittyBody.position.copy(playerBody.position);
-            kittyBody.position.y += 5;
-            kittyBody.velocity.set(0, 0, 0);
-            kittyState = HK_STATE.FAN_CHASE;
-            notify("¡LLAMASTE A HELLO KITTY!", "pink");
-            showDialogue("hk_fan", "kitty-speak");
         }
 
         // --- SISTEMA DE INTERACCIONES (COMER / DORMIR) ---
@@ -1114,20 +1022,24 @@
                     if(moVec.distanceTo(molangTarget) < 3 || Math.random() < 0.01) {
                         molangTarget.set((Math.random()-0.5)* (MAP_SIZE - 40), 2, (Math.random()-0.5)* (MAP_SIZE - 40));
                     }
-                    moveBody(molangBody, molangTarget, 5.0 * difficultySettings.speedMultiplier);
+                    smartMoveBody(molangBody, molangTarget, 5.0 * difficultySettings.speedMultiplier);
                     break;
                 case MO_STATE.FOLLOW:
                     document.getElementById('molang-status').innerText = "🐰 MOLANG: ¡QUIERE ABRAZOS!";
-                    moveBody(molangBody, playerPos, 6.5);
-                    if(distToPlayer < 3) {
-                         if(Math.random() < 0.02) showDialogue('mo_hug', 'molang-speak');
+                    
+                    if (distToPlayer > 3.0) {
+                        smartMoveBody(molangBody, playerPos, 6.5);
+                    } else {
+                        smartMoveBody(molangBody, moVec, 0); 
+                        if(Math.random() < 0.02) showDialogue('mo_hug', 'molang-speak');
                     }
+                    
                     if(distToPlayer > 30) molangState = MO_STATE.WANDER;
                     break;
                 case MO_STATE.EATING:
                     document.getElementById('molang-status').innerText = "🐰 MOLANG: COMIENDO PIZZA";
                     if(nearestFood && nearestFood.visible) {
-                        moveBody(molangBody, nearestFood.position, 8.0);
+                        smartMoveBody(molangBody, nearestFood.position, 8.0);
                         if(foodDist < 2) {
                              nearestFood.visible = false; 
                              molangState = MO_STATE.WANDER;
@@ -1139,85 +1051,17 @@
             }
         }
 
-        // --- UPDATE HELLO KITTY ---
-        function updateHelloKitty(dt, playerPos, kuromiPos, melodyPos) {
-            if(!kittyMesh) return;
-            const kPos = kittyBody.position;
-            const kVec = new THREE.Vector3(kPos.x, kPos.y, kPos.z);
-            kittyMesh.position.copy(kVec); kittyMesh.position.y -= 1;
-
-            const distToPlayer = kVec.distanceTo(playerPos);
-            const distToKuromi = kVec.distanceTo(kuromiPos);
-            const distToMelody = kVec.distanceTo(melodyPos);
-
-            let lookTarget = kittyTarget;
-            if(kittyState === HK_STATE.FAN_CHASE) lookTarget = playerPos;
-            if(kittyState === HK_STATE.PROTECT_MELODY) lookTarget = kuromiPos;
-            if(lookTarget && kVec.distanceTo(lookTarget) > 0.5) kittyMesh.lookAt(lookTarget.x, kittyMesh.position.y, lookTarget.z);
-            
-            animateModel(kittyMesh, true, dt, 1.0);
-            
-            if(kuromiState === K_STATE.CHASE_MELODY && distToKuromi < 40) {
-                kittyState = HK_STATE.PROTECT_MELODY;
-            } else if (kittyState === HK_STATE.PROTECT_MELODY && kuromiState !== K_STATE.CHASE_MELODY) {
-                kittyState = HK_STATE.WANDER; 
-            }
-
-            if(kittyState !== HK_STATE.PROTECT_MELODY) {
-                if(distToPlayer < 30) {
-                    if(kittyState !== HK_STATE.FAN_CHASE) showDialogue("hk_fan", "kitty-speak");
-                    kittyState = HK_STATE.FAN_CHASE;
-                } else if(kittyState === HK_STATE.FAN_CHASE && distToPlayer > 40) {
-                    kittyState = HK_STATE.FIERCE_SEARCH;
-                    showDialogue("hk_lost", "kitty-speak");
-                    notify("KITTY TE PERDIÓ - ¡TE BUSCA FEROZMENTE!", "pink");
-                }
-            }
-
-            switch(kittyState) {
-                case HK_STATE.WANDER:
-                    if(kVec.distanceTo(kittyTarget) < 3 || Math.random() < 0.005) {
-                        kittyTarget.set((Math.random()-0.5)* (MAP_SIZE - 40), 2, (Math.random()-0.5)* (MAP_SIZE - 40));
-                    }
-                    moveBody(kittyBody, kittyTarget, 5.0);
-                    break;
-                
-                case HK_STATE.FAN_CHASE:
-                    if(distToPlayer > 2.5) {
-                        moveBody(kittyBody, playerPos, 6.5);
-                    } else {
-                        moveBody(kittyBody, kVec, 0); 
-                        if(Math.random() < 0.01) showDialogue("hk_hug", "kitty-speak");
-                    }
-                    break;
-
-                case HK_STATE.FIERCE_SEARCH:
-                    moveBody(kittyBody, playerPos, 9.0);
-                    if(distToPlayer < 10) kittyState = HK_STATE.FAN_CHASE;
-                    break;
-
-                case HK_STATE.PROTECT_MELODY:
-                    showDialogue("hk_angry_k", "kitty-speak");
-                    moveBody(kittyBody, kuromiPos, 10.0);
-                    if(distToKuromi < 3.0) {
-                        kuromiState = K_STATE.FLEE; 
-                        showDialogue("k_punished", "kuromi-speak");
-                        notify("KITTY REGAÑÓ A KUROMI", "success");
-                        kittyState = HK_STATE.WANDER; 
-                    }
-                    break;
-            }
-        }
-
-        // --- UPDATE MY MELODY ---
-        function updateMyMelody(dt, playerPos, kuromiPos) {
+        // --- UPDATE MY MELODY (Mecánica de Escudo) ---
+        function updateMyMelody(dt, playerPos, kuromiPos, catCanSeePlayer) {
             if(!melodyMesh) return;
+            if(melodyCooldown > 0) melodyCooldown -= dt;
+
             const mPos = melodyBody.position;
             const mVec = new THREE.Vector3(mPos.x, mPos.y, mPos.z);
             melodyMesh.position.copy(mVec); melodyMesh.position.y -= 1;
             
             let lookTarget = null;
-            if(melodyState === M_STATE.FOLLOW || melodyState === M_STATE.PERSISTENT_FOLLOW) { lookTarget = playerPos; animateModel(melodyMesh, true, dt, 1.5); } 
+            if(melodyState === M_STATE.FOLLOW) { lookTarget = playerPos; animateModel(melodyMesh, true, dt, 1.5); } 
             else if (melodyState === M_STATE.FLEE_KUROMI) { const away = mVec.clone().sub(kuromiPos).add(mVec); lookTarget = away; animateModel(melodyMesh, true, dt, 3.0); } 
             else { lookTarget = melodyTarget; animateModel(melodyMesh, mVec.distanceTo(melodyTarget) > 1, dt, 1.0); }
 
@@ -1226,30 +1070,29 @@
             const distToPlayer = mVec.distanceTo(playerPos);
             const distToKuromi = mVec.distanceTo(kuromiPos);
 
-            // DETECCIÓN VISUAL HACIA MELODY
-            const camDirM = new THREE.Vector3(); camera.getWorldDirection(camDirM);
-            const toMelody = new THREE.Vector3().subVectors(mVec, playerPos).normalize();
-            const dotM = camDirM.dot(toMelody);
+            // Mecánica de Escudo/Repelente
+            if (distToPlayer < 10 && melodyCooldown <= 0) {
+                immuneTimer = 15.0; // 15 segundos de inmunidad
+                melodyCooldown = 60.0; // Solo lo hace 1 vez cada minuto
+                showDialogue('m_give_repellent', 'melody-speak');
+                notify("¡MY MELODY TE DIO UN ESCUDO PROTECTOR!", "success");
 
-            raycaster.set(playerPos, toMelody);
-            const intersectsM = raycaster.intersectObjects([...walls]);
-            let canSeeMelody = (distToPlayer < difficultySettings.detectionRadius && (intersectsM.length === 0 || intersectsM[0].distance > distToPlayer));
-
-            if (dotM > 0.96 && canSeeMelody && melodyState !== M_STATE.FLEE_KUROMI) {
-                mGazeTime += dt;
-                if (mGazeTime > 2.0 && melodyState !== M_STATE.PERSISTENT_FOLLOW) {
-                    melodyState = M_STATE.PERSISTENT_FOLLOW;
-                    mIgnoreTimer = 0;
-                    showDialogue('m_paws_notice', 'melody-speak');
-                    notify("MELODY QUIERE ENSEÑARTE SUS PATITAS", "pink");
+                // Reacción de Chococat a que te hayan dado un escudo
+                if (catCanSeePlayer) {
+                    currentState = AI_STATE.RAGE;
+                    showDialogue('c_repellent_rage', 'rage-speak');
+                    notify("¡CHOCOCAT VIO EL ESCUDO Y ENFURECIÓ!", "danger");
+                    frustration++; evolve();
+                } else {
+                    baseSpeed *= 1.5;
+                    showDialogue('c_repellent_search', 'chococat-speak');
+                    notify("¡CHOCOCAT SABE ALGO! ¡ACELERANDO ESCANEO!", "warning");
                 }
-            } else {
-                mGazeTime = Math.max(0, mGazeTime - dt);
             }
 
             if(distToKuromi < 20 && melodyState !== M_STATE.FLEE_KUROMI) {
                 melodyState = M_STATE.FLEE_KUROMI; showDialogue("m_scared", "melody-speak"); notify("MELODY HUYE DE KUROMI", "pink");
-            } else if (distToPlayer < 15 && melodyState !== M_STATE.FOLLOW && melodyState !== M_STATE.FLEE_KUROMI && melodyState !== M_STATE.PERSISTENT_FOLLOW) {
+            } else if (distToPlayer < 15 && melodyState !== M_STATE.FOLLOW && melodyState !== M_STATE.FLEE_KUROMI) {
                 melodyState = M_STATE.FOLLOW; showDialogue("m_hi", "melody-speak");
             }
 
@@ -1260,184 +1103,105 @@
                         melodyTarget.set((Math.random()-0.5)* (MAP_SIZE - 40), 2, (Math.random()-0.5)* (MAP_SIZE - 40));
                         if(Math.random() < 0.3) showDialogue("m_humming", "melody-speak");
                     }
-                    moveBody(melodyBody, melodyTarget, 4.0 * difficultySettings.speedMultiplier);
+                    smartMoveBody(melodyBody, melodyTarget, 4.0 * difficultySettings.speedMultiplier);
                     break;
                 case M_STATE.FOLLOW:
                     document.getElementById('melody-status').innerText = "🌸 MY MELODY: TE ACOMPAÑA";
-                    if(distToPlayer > 5) moveBody(melodyBody, playerPos, 5.5); else moveBody(melodyBody, mVec, 0); 
+                    if(distToPlayer > 5) smartMoveBody(melodyBody, playerPos, 5.5); else smartMoveBody(melodyBody, mVec, 0); 
                     if(Math.random() < 0.002) showDialogue("m_follow", "melody-speak");
                     if(distToPlayer > 30) melodyState = M_STATE.WANDER;
-                    break;
-                case M_STATE.PERSISTENT_FOLLOW:
-                    let mSpeed = 6.0;
-                    if (dotM > 0.8 && canSeeMelody) {
-                        // El jugador volteó a verla
-                        if (mIgnoreTimer > 5.0) {
-                            showDialogue('m_paws_happy', 'melody-speak');
-                            mIgnoreTimer = 0; // Se contenta
-                        }
-                        mIgnoreTimer = Math.max(0, mIgnoreTimer - dt * 2);
-                        document.getElementById('melody-status').innerText = "🌸 MY MELODY: ¡FELIZ DE QUE LA MIRES!";
-                    } else {
-                        // El jugador la está ignorando
-                        mIgnoreTimer += dt;
-                        
-                        if (mIgnoreTimer > 5 && mIgnoreTimer < 5.1) { showDialogue('m_paws_ignore_1', 'melody-speak'); notify("MELODY SE ESTÁ IMPACIENTANDO", "pink"); }
-                        if (mIgnoreTimer > 10 && mIgnoreTimer < 10.1) showDialogue('m_paws_ignore_2', 'melody-speak');
-                        if (mIgnoreTimer > 15) {
-                            if (Math.random() < 0.01) showDialogue('m_paws_ignore_3', 'melody-speak');
-                            mSpeed = 9.5; // Corre más rápido tras de ti
-                            document.getElementById('melody-status').innerText = "🌸 MY MELODY: ¡TE ESTÁ ROGANDO ATENCIÓN!";
-                        } else {
-                            document.getElementById('melody-status').innerText = "🌸 MY MELODY: TE EXIGE ATENCIÓN";
-                        }
-                    }
-                    
-                    if(distToPlayer > 4) moveBody(melodyBody, playerPos, mSpeed); else moveBody(melodyBody, mVec, 0);
                     break;
                 case M_STATE.FLEE_KUROMI:
                     document.getElementById('melody-status').innerText = "🌸 MY MELODY: HUYENDO";
                     const fleeDir = new THREE.Vector3().subVectors(mVec, kuromiPos).normalize().multiplyScalar(10);
                     const fleeTarget = mVec.clone().add(fleeDir);
-                    moveBody(melodyBody, fleeTarget, 8.0);
+                    smartMoveBody(melodyBody, fleeTarget, 8.0);
                     if(distToKuromi > 30) melodyState = M_STATE.WANDER;
                     break;
             }
         }
 
-        // --- UPDATE KUROMI ---
-        function updateKuromi(dt, playerPos, melodyPos) {
+        // --- UPDATE KUROMI (Mecánica de Distracción a Chococat) ---
+        function updateKuromi(dt, playerPos, melodyPos, catPos) {
             if(!kuromiMesh) return;
+            if(kuromiDistractCooldown > 0) kuromiDistractCooldown -= dt;
+
             const kPos = kuromiBody.position;
             const kVec = new THREE.Vector3(kPos.x, kPos.y, kPos.z);
             kuromiMesh.position.copy(kVec); kuromiMesh.position.y -= 1;
             
-            const isMoving = kVec.distanceTo(kuromiTarget) > 1 || kuromiState === K_STATE.INTERROGATE || kuromiState === K_STATE.FLEE || kuromiState === K_STATE.REJECTED_RAGE;
+            const isMoving = kVec.distanceTo(kuromiTarget) > 1 || kuromiState === K_STATE.INTERROGATE || kuromiState === K_STATE.FLEE || kuromiState === K_STATE.DISTRACT_CHOCOCAT;
             animateModel(kuromiMesh, isMoving, dt, 1.2);
 
-            const dist = kVec.distanceTo(playerPos);
+            const distToPlayer = kVec.distanceTo(playerPos);
             const distMelody = kVec.distanceTo(melodyPos);
+            const distToCat = kVec.distanceTo(catPos);
             
-            const camDirK = new THREE.Vector3(); camera.getWorldDirection(camDirK);
-            const toKuromi = new THREE.Vector3().subVectors(kVec, playerPos).normalize();
-            const dotK = camDirK.dot(toKuromi);
-            
-            raycaster.set(playerPos, toKuromi);
-            const intersectsK = raycaster.intersectObjects([...walls]);
-            let canSeeKuromi = (dist < difficultySettings.detectionRadius && (intersectsK.length === 0 || intersectsK[0].distance > dist));
-
-            // EVENTO VIDEOCLIP MUSICAL
-            if (!musicVideoOffered && dist < 25 && kuromiState === K_STATE.PATROL && gameStarted) {
-                musicVideoOffered = true;
-                musicVideoPromptActive = true;
-                kuromiState = K_STATE.MUSIC_PROMPT;
-                
-                // Traemos a Chococat al lado de Kuromi
-                currentState = AI_STATE.WAITING_VIDEO_RESPONSE;
-                chococatBody.position.set(kVec.x + 3, kVec.y, kVec.z + 3);
-                chococatBody.velocity.set(0,0,0);
-                kuromiBody.velocity.set(0,0,0);
-                
-                document.getElementById('video-prompt').style.display = 'block';
-                showDialogue('mv_offer', 'kuromi-speak');
-            }
-
-            if (dotK > 0.96 && canSeeKuromi && kuromiState !== K_STATE.LOVE_CHASE && kuromiState !== K_STATE.FLEE && kuromiState !== K_STATE.MUSIC_PROMPT && kuromiState !== K_STATE.REJECTED_RAGE) {
-                kGazeTime += dt;
-                if (kGazeTime > LOVE_THRESHOLD && !isKuromiLoveMode) {
-                    isKuromiLoveMode = true;
-                    kuromiState = K_STATE.LOVE_CHASE;
-                    showDialogue('k_love_start', 'kuromi-love-speak');
-                    notify("KUROMI MODO TSUNDERE", "pink");
-                    document.getElementById('kuromi-status').innerText = "😈 KUROMI: TSUNDERE ❤️";
-                    document.getElementById('kuromi-status').style.color = "#ff1493";
-                }
-            } else {
-                kGazeTime = Math.max(0, kGazeTime - dt);
+            // Decidir ayudar al jugador si Chococat lo persigue
+            if ((currentState === AI_STATE.CHASE || currentState === AI_STATE.RAGE) && distToCat < 60 && kuromiDistractCooldown <= 0 && kuromiState !== K_STATE.DISTRACT_CHOCOCAT) {
+                kuromiState = K_STATE.DISTRACT_CHOCOCAT;
+                showDialogue('k_distract', 'kuromi-speak');
             }
 
             let kLookTarget = null;
-            if(kuromiState === K_STATE.INTERROGATE || kuromiState === K_STATE.FLEE || kuromiState === K_STATE.LOVE_CHASE || kuromiState === K_STATE.MUSIC_PROMPT || kuromiState === K_STATE.REJECTED_RAGE) kLookTarget = playerPos;
+            if(kuromiState === K_STATE.INTERROGATE || kuromiState === K_STATE.FLEE) kLookTarget = playerPos;
             else if(kuromiState === K_STATE.CHASE_MELODY) kLookTarget = melodyPos;
+            else if(kuromiState === K_STATE.DISTRACT_CHOCOCAT) kLookTarget = catPos;
             else kLookTarget = kuromiTarget; 
 
             if(kLookTarget && kVec.distanceTo(kLookTarget) > 0.5) kuromiMesh.lookAt(kLookTarget.x, kuromiMesh.position.y, kLookTarget.z);
             
-            if(distMelody < 15 && kuromiState !== K_STATE.CHASE_MELODY && kuromiState !== K_STATE.FLEE && kuromiState !== K_STATE.LOVE_CHASE && kuromiState !== K_STATE.MUSIC_PROMPT && kuromiState !== K_STATE.REJECTED_RAGE) {
+            if(distMelody < 15 && kuromiState !== K_STATE.CHASE_MELODY && kuromiState !== K_STATE.FLEE && kuromiState !== K_STATE.DISTRACT_CHOCOCAT) {
                 kuromiState = K_STATE.CHASE_MELODY; showDialogue("k_shoo", "kuromi-speak");
             }
 
             switch(kuromiState) {
                 case K_STATE.PATROL:
+                    document.getElementById('kuromi-status').innerText = "😈 KUROMI: PATRULLANDO";
                     if(kVec.distanceTo(kuromiTarget) < 3 || Math.random() < 0.01) kuromiTarget.set((Math.random()-0.5)* (MAP_SIZE - 40), 2, (Math.random()-0.5)* (MAP_SIZE - 40));
-                    moveBody(kuromiBody, kuromiTarget, 6.0 * difficultySettings.speedMultiplier);
-                    if(dist < (difficultySettings.detectionRadius / 2) && !musicVideoPromptActive) {
+                    smartMoveBody(kuromiBody, kuromiTarget, 6.0 * difficultySettings.speedMultiplier);
+                    if(distToPlayer < (difficultySettings.detectionRadius / 2)) {
                          kuromiState = K_STATE.INTERROGATE; showDialogue("k_intro", "kuromi-speak"); notify("KUROMI TE QUIERE PREGUNTAR ALGO", "purple");
                     }
                     break;
-                case K_STATE.MUSIC_PROMPT:
-                    moveBody(kuromiBody, kVec, 0); // Se queda quieta esperando
-                    document.getElementById('kuromi-status').innerText = "😈 KUROMI: ESPERANDO RESPUESTA...";
-                    if (dist > 40) {
-                        // El jugador huyó sin responder = Rechazo
-                        window.triggerVideoReject();
+                case K_STATE.DISTRACT_CHOCOCAT:
+                    document.getElementById('kuromi-status').innerText = "😈 KUROMI: ¡DISTRAYENDO A CHOCOCAT!";
+                    smartMoveBody(kuromiBody, catPos, 12.0); // Va rápido hacia Chococat
+                    if (distToCat < 5) {
+                        showDialogue('k_distract_success', 'kuromi-speak');
+                        notify("¡KUROMI HA EMPUJADO A CHOCOCAT!", "success");
+                        currentState = AI_STATE.STUNNED; // Aturde a Chococat
+                        stunTimer = 4.0;
+                        kuromiState = K_STATE.FLEE; // Luego Kuromi huye
+                        kuromiDistractCooldown = 30.0;
                     }
-                    break;
-                case K_STATE.REJECTED_RAGE:
-                    document.getElementById('kuromi-status').innerText = "😈 KUROMI: ¡¡¡FURIA ABSOLUTA!!!";
-                    document.getElementById('kuromi-status').style.color = "red";
-                    moveBody(kuromiBody, playerPos, 15.0); // Persigue rápido
-                    if (dist < 3) triggerJumpscare("¡KUROMI TE CANCELÓ POR IGNORAR SU VIDEO!");
                     break;
                 case K_STATE.INTERROGATE:
                     const pVel = new THREE.Vector3(playerBody.velocity.x, 0, playerBody.velocity.z);
                     const speed = 7.5 * difficultySettings.speedMultiplier;
-                    const timeToTarget = dist / speed;
+                    const timeToTarget = distToPlayer / speed;
                     const pred = playerPos.clone().add(pVel.multiplyScalar(Math.min(timeToTarget, 2.0)));
                     
-                    moveBody(kuromiBody, pred, speed);
+                    smartMoveBody(kuromiBody, pred, speed);
 
-                    if(dist < 4) {
-                        moveBody(kuromiBody, kVec, 0); 
+                    if(distToPlayer < 4) {
+                        smartMoveBody(kuromiBody, kVec, 0); 
                         if(Math.random() < 0.02) showDialogue(Math.random()>0.5 ? "k_question_1" : "k_question_2", "kuromi-speak");
                         kuromiTimer += dt;
                         if(kuromiTimer > 5.0) { kuromiTimer = 0; kuromiState = K_STATE.FLEE; showDialogue("k_mess", "kuromi-speak"); }
                     }
                     break;
                 case K_STATE.CHASE_MELODY:
-                     moveBody(kuromiBody, melodyPos, 7.0);
+                     smartMoveBody(kuromiBody, melodyPos, 7.0);
                      if(distMelody < 4) { showDialogue("k_chase_melody", "kuromi-speak"); if(Math.random() < 0.05) kuromiState = K_STATE.PATROL; }
                      if(distMelody > 25) kuromiState = K_STATE.PATROL;
                      break;
                 case K_STATE.FLEE:
                     const fleeDir = new THREE.Vector3().subVectors(kVec, playerPos).normalize().multiplyScalar(20);
                     const fleeTarget = kVec.clone().add(fleeDir);
-                    moveBody(kuromiBody, fleeTarget, 9.0);
+                    smartMoveBody(kuromiBody, fleeTarget, 9.0);
                     kuromiTimer += dt;
                     if(kuromiTimer > 4.0) { kuromiTimer = 0; kuromiState = K_STATE.PATROL; }
-                    break;
-                case K_STATE.LOVE_CHASE:
-                    const pvK = new THREE.Vector3(playerBody.velocity.x, 0, playerBody.velocity.z);
-                    if(pvK.length() > 2.0) {
-                         const pred = playerPos.clone().add(pvK.normalize().multiplyScalar(pvK.length() * 1.5)); 
-                         kuromiTarget.lerp(pred, 0.9);
-                    } else { kuromiTarget.copy(playerPos); }
-                    moveBody(kuromiBody, kuromiTarget, 8.0 * difficultySettings.speedMultiplier);
-                    
-                    if (Math.random() < 0.005) showDialogue('k_love_chase', 'kuromi-love-speak');
-
-                    if(dist < 2.5) {
-                         showDialogue('k_love_catch', 'kuromi-love-speak');
-                         triggerJumpscare("¡KUROMI TE ATRAPÓ CON SU AMOR!");
-                    }
-                    
-                    if(!canSeeKuromi && dist > 35) {
-                         isKuromiLoveMode = false;
-                         kuromiState = K_STATE.PATROL;
-                         document.getElementById('kuromi-status').innerText = "😈 KUROMI: PATRULLANDO";
-                         document.getElementById('kuromi-status').style.color = "#a020f0";
-                         notify("KUROMI SE CALMÓ", "purple");
-                    }
                     break;
             }
         }
@@ -1489,7 +1253,7 @@
         }
 
         function checkVisualContact(dt, catPos, playerPos, canSee) {
-            if(!chococatMesh || currentState === AI_STATE.STUNNED || currentState === AI_STATE.RAGE || currentState === AI_STATE.ABDUCTING || currentState === AI_STATE.SLEEPING || currentState === AI_STATE.BED_SHOCK || currentState === AI_STATE.WAITING_VIDEO_RESPONSE) return;
+            if(!chococatMesh || currentState === AI_STATE.STUNNED || currentState === AI_STATE.RAGE || currentState === AI_STATE.ABDUCTING || currentState === AI_STATE.SLEEPING || currentState === AI_STATE.BED_SHOCK) return;
             
             const camDir = new THREE.Vector3(); camera.getWorldDirection(camDir);
             const toCat = new THREE.Vector3().subVectors(catPos, playerPos).normalize();
@@ -1530,8 +1294,23 @@
         function updateAI(dt, timeAlive) {
             if(!chococatMesh || !gameStarted) return; if(isAbducted) return;
 
+            // Manejo de la Inmunidad por escudo o tiempo de gracia
             const graceEl = document.getElementById('grace-period');
-            if (timeAlive < 5) { graceEl.style.display = 'block'; return; } else { graceEl.style.display = 'none'; }
+            let hasImmunity = false;
+            if (immuneTimer > 0) {
+                immuneTimer -= dt;
+                hasImmunity = true;
+                graceEl.innerText = "🛡️ ESCUDO MELODY ACTIVO 🛡️";
+                graceEl.style.display = 'block';
+                graceEl.style.color = "pink";
+            } else if (timeAlive < 5) {
+                hasImmunity = true;
+                graceEl.innerText = "🛡 INMUNIDAD 🛡";
+                graceEl.style.display = 'block';
+                graceEl.style.color = "cyan";
+            } else {
+                graceEl.style.display = 'none';
+            }
 
             const catPosThree = new THREE.Vector3(chococatBody.position.x, chococatBody.position.y, chococatBody.position.z);
             const playerPos = camera.position.clone();
@@ -1556,17 +1335,24 @@
             const melodyPos = melodyBody ? new THREE.Vector3(melodyBody.position.x, melodyBody.position.y, melodyBody.position.z) : new THREE.Vector3(0, -100, 0);
             const kuromiPos = kuromiBody ? new THREE.Vector3(kuromiBody.position.x, kuromiBody.position.y, kuromiBody.position.z) : new THREE.Vector3(0, -100, 0);
             
+            // Calcular Visión Global
+            raycaster.set(catPosThree, playerPos.clone().sub(catPosThree).normalize());
+            const intersects = raycaster.intersectObjects([...walls]);
+            const detectionRange = difficultySettings.detectionRadius * currentScale;
+            let canSee = (distToPlayer < detectionRange && (intersects.length === 0 || intersects[0].distance > distToPlayer));
+            if(invisibleMode) canSee = false; 
+
+            // Update Secundarios
             updateMolang(dt, playerPos);
-            updateKuromi(dt, playerPos, melodyPos);
-            updateMyMelody(dt, playerPos, kuromiPos);
-            updateHelloKitty(dt, playerPos, kuromiPos, melodyPos); 
+            updateMyMelody(dt, playerPos, kuromiPos, canSee);
+            updateKuromi(dt, playerPos, melodyPos, catPosThree);
 
             chococatMesh.position.copy(catPosThree); chococatMesh.position.y = chococatBody.position.y - 1;
             
-            const isChocoMoving = currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE;
+            const isChocoMoving = currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.STUNNED;
             if (isChocoMoving) animateModel(chococatMesh, true, dt, currentScale); 
 
-            if(currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE) {
+            if(currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK) {
                 if(currentState === AI_STATE.SEARCH || currentState === AI_STATE.SUSPICION || currentState === AI_STATE.INVESTIGATE_LAST_SEEN) {
                      chococatMesh.lookAt(targetPosition.x, chococatMesh.position.y, targetPosition.z);
                 } else {
@@ -1574,26 +1360,38 @@
                 }
             }
 
-            if(keysCollected === totalKeys && distToPlayer < 3 && currentState !== AI_STATE.RAGE && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE) {
+            if(keysCollected === totalKeys && distToPlayer < 3 && currentState !== AI_STATE.RAGE && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.BED_SHOCK) {
                 keysCollected = 0; respawnKeys();
                 notify("¡TE ROBÓ LAS LLAVES!", "danger"); showDialogue("keys_stolen", "chococat-speak");
                 document.getElementById('objective').innerText = `LLAVES: 0/${totalKeys} 🗝️`; doorLight.color.setHex(0xff0000); 
             }
 
-            raycaster.set(catPosThree, playerPos.clone().sub(catPosThree).normalize());
-            const intersects = raycaster.intersectObjects([...walls]);
-            const detectionRange = difficultySettings.detectionRadius * currentScale;
-            let canSee = (distToPlayer < detectionRange && (intersects.length === 0 || intersects[0].distance > distToPlayer));
-            if(invisibleMode) canSee = false; 
-
-            if(difficultySettings.hearFootsteps && keys.shift && distToPlayer < 60 && !isSleeping) {
-                if(currentState === AI_STATE.SEARCH || currentState === AI_STATE.SUSPICION) {
-                    currentState = AI_STATE.SUSPICION;
-                    targetPosition.copy(playerPos);
-                    if(!flags.noiseWarn) { notify("¡TE ESCUCHÓ CORRER!", "danger"); flags.noiseWarn = true; }
+            // --- SISTEMA DE RUIDO (AUDICIÓN INTELIGENTE) ---
+            const pVel = new THREE.Vector3(playerBody.velocity.x, 0, playerBody.velocity.z);
+            const pSpeed = pVel.length();
+            let noiseRadius = 0;
+            
+            if (pSpeed > 1) { // El jugador se está moviendo
+                if (keys.shift) {
+                    noiseRadius = 50 * difficultySettings.speedMultiplier; // Correr hace mucho ruido
+                } else {
+                    noiseRadius = 20 * difficultySettings.speedMultiplier; // Caminar hace ruido moderado
                 }
-            } else {
-                if(!keys.shift) flags.noiseWarn = false;
+            }
+            if (difficultySettings.hearFootsteps) noiseRadius *= 1.5; // Modo Granny amplifica audición
+
+            if (distToPlayer < noiseRadius && !isSleeping) {
+                if (currentState === AI_STATE.SEARCH || currentState === AI_STATE.SURVEILLANCE || currentState === AI_STATE.INVESTIGATE_LAST_SEEN) {
+                    currentState = AI_STATE.SUSPICION;
+                    targetPosition.copy(playerPos); // Va exactamente a donde escuchó el ruido
+                    if (!flags.noiseWarn) {
+                        notify("¡CHOCOCAT OYÓ TUS PASOS!", "warning");
+                        showDialogue('noise', 'chococat-speak');
+                        flags.noiseWarn = true;
+                    }
+                }
+            } else if (pSpeed < 1) {
+                flags.noiseWarn = false;
             }
 
             const stealthInd = document.getElementById('stealth-indicator');
@@ -1612,7 +1410,7 @@
             if(distToDoor) {
                 if(!flags.escapeWarn) { notify("ESTÁS CERCA DE LA SALIDA...", "info"); flags.escapeWarn = true; }
                 let canSeeDoor = (distToPlayer < 60 && (intersects.length === 0 || intersects[0].distance > distToPlayer));
-                if(canSeeDoor && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.RAGE && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE) { triggerAbduction(); return; }
+                if(canSeeDoor && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.RAGE && currentState !== AI_STATE.BED_SHOCK) { triggerAbduction(); return; }
             } else { flags.escapeWarn = false; }
 
             if(playerPos.z < FORBIDDEN_Z + 15 && playerPos.z > FORBIDDEN_Z && !flags.zoneWarn) { notify("ADVERTENCIA: ZONA PROHIBIDA CERCA", "warning"); flags.zoneWarn = true; } 
@@ -1624,18 +1422,32 @@
 
             checkVisualContact(dt, catPosThree, playerPos, canSee);
             
-            if(isEating && canSee && currentState !== AI_STATE.RAGE && currentState !== AI_STATE.LOVE_CHASE && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.BEGGING_FOOD && currentState !== AI_STATE.SURVEILLANCE && currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE) {
+            if(isEating && canSee && currentState !== AI_STATE.RAGE && currentState !== AI_STATE.LOVE_CHASE && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.BEGGING_FOOD && currentState !== AI_STATE.SURVEILLANCE && currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK) {
                 currentState = AI_STATE.BEGGING_FOOD; begTimer = 0; showDialogue('food_beg_1', 'chococat-speak'); notify("¡QUIERE TU COMIDA!", "warning");
             }
 
             let currentSpeed = baseSpeed * difficultySettings.speedMultiplier + (loneliness * 0.5);
             const statusEl = document.getElementById('status');
+            
+            // Jumpscare Logic (Interrumpida si hay inmunidad)
+            const checkJumpscare = () => {
+                if(distToPlayer < (1.5 * currentScale)) {
+                    if(hasImmunity) {
+                        // Rebotar a Chococat
+                        let pushDir = new THREE.Vector3().subVectors(catPosThree, playerPos).normalize();
+                        chococatBody.velocity.set(pushDir.x * 20, 5, pushDir.z * 20);
+                        notify("¡EL ESCUDO REPILIÓ A CHOCOCAT!", "info");
+                    } else {
+                        triggerJumpscare("¡CHOCOCAT TE ATRAPÓ!");
+                    }
+                }
+            };
 
             switch(currentState) {
                 case AI_STATE.SEARCH:
                     statusEl.innerText = "ESTADO: BUSCANDO ATENCIÓN"; statusEl.style.color = "lime";
                     if(catPosThree.distanceTo(targetPosition) < 3) targetPosition.set((Math.random()-0.5)* (MAP_SIZE - 20), 1, (Math.random()-0.5)* (MAP_SIZE - 20));
-                    moveBody(chococatBody, targetPosition, currentSpeed);
+                    smartMoveBody(chococatBody, targetPosition, currentSpeed, currentScale);
                     if(canSee) { currentState = AI_STATE.CHASE; showDialogue('found', 'chococat-speak'); notify("DETECTADO", "danger"); }
                     break;
                 case AI_STATE.CHASE:
@@ -1660,8 +1472,8 @@
                         }
                     }
 
-                    moveBody(chococatBody, targetPosition, currentSpeed * 1.5);
-                    if(distToPlayer < (1.5 * currentScale)) triggerJumpscare("¡CHOCOCAT TE ATRAPÓ!");
+                    smartMoveBody(chococatBody, targetPosition, currentSpeed * 1.5, currentScale);
+                    checkJumpscare();
                     break;
                 case AI_STATE.LOVE_CHASE:
                     statusEl.innerText = "ESTADO: OBSESIÓN ❤️"; statusEl.style.color = "#ff00ff";
@@ -1669,44 +1481,39 @@
                     if(pv.length() > 2.0) {
                          const pred = playerPos.clone().add(pv.normalize().multiplyScalar(pv.length() * 2.0)); targetPosition.lerp(pred, 0.9);
                     } else { targetPosition.copy(playerPos); }
-                    moveBody(chococatBody, targetPosition, baseSpeed * 2.2); 
+                    smartMoveBody(chococatBody, targetPosition, baseSpeed * 2.2, currentScale); 
                     
                     if (Math.random() < 0.005) showDialogue(Math.random() > 0.5 ? 'love_chase_1' : 'love_chase_2', 'love-speak');
                     
-                    if(distToPlayer < (1.5 * currentScale)) triggerJumpscare("¡EL AMOR DE CHOCOCAT TE ATRAPÓ!");
+                    checkJumpscare();
                     if(!canSee) { currentState = AI_STATE.INVESTIGATE_LAST_SEEN; baseSpeed *= 1.5; }
                     break;
                 case AI_STATE.BEGGING_FOOD:
                     statusEl.innerText = "ESTADO: GULA"; statusEl.style.color = "cyan";
                     begTimer += dt;
-                    if(distToPlayer > 6) moveBody(chococatBody, playerPos, baseSpeed * 2.0); else moveBody(chococatBody, catPosThree, 0);
+                    if(distToPlayer > 6) smartMoveBody(chococatBody, playerPos, baseSpeed * 2.0, currentScale); else smartMoveBody(chococatBody, catPosThree, 0, currentScale);
                     if(begTimer > 8) { showDialogue('food_insistent', 'rage-speak'); currentState = AI_STATE.RAGE; }
                     if(!isEating) currentState = AI_STATE.CHASE; 
-                    break;
-                case AI_STATE.WAITING_VIDEO_RESPONSE:
-                    statusEl.innerText = "ESTADO: ESPERANDO TU OPINIÓN"; statusEl.style.color = "pink";
-                    moveBody(chococatBody, catPosThree, 0);
-                    chococatMesh.lookAt(playerPos.x, chococatMesh.position.y, playerPos.z);
                     break;
                 case AI_STATE.RAGE:
                     statusEl.innerText = "ESTADO: !!! FURIA !!!"; statusEl.style.color = "#880000";
                     document.getElementById('rage-overlay').style.display = 'block'; chococatMesh.scale.set(5,5,5); 
-                    targetPosition.copy(playerPos); moveBody(chococatBody, targetPosition, 25.0); 
-                    if(distToPlayer < 4) triggerJumpscare("¡LA FURIA DE CHOCOCAT TE DESTRUYÓ!");
+                    targetPosition.copy(playerPos); smartMoveBody(chococatBody, targetPosition, 25.0, currentScale); 
+                    checkJumpscare();
                     break;
                 case AI_STATE.SURVEILLANCE:
                     statusEl.innerText = "ESTADO: VIGILANDO..."; statusEl.style.color = "white";
                     surveillanceTimer -= dt;
-                    if(distToPlayer > 5) moveBody(chococatBody, playerPos, baseSpeed * 0.8); else moveBody(chococatBody, catPosThree, 0);
+                    if(distToPlayer > 5) smartMoveBody(chococatBody, playerPos, baseSpeed * 0.8, currentScale); else smartMoveBody(chococatBody, catPosThree, 0, currentScale);
                     if(surveillanceTimer <= 0) { currentState = AI_STATE.SEARCH; notify("CHOCOCAT SE ALEJA...", "info"); }
                     break;
                 case AI_STATE.SLEEPING:
                     statusEl.innerText = "ESTADO: OBSERVÁNDOTE DESDE LA CAMA 👀"; statusEl.style.color = "#aaa";
                     if(bedBroken) { currentState = AI_STATE.BED_SHOCK; shockTimer = 5.0; break; }
                     if(catPosThree.distanceTo(bedMesh.position) > 2) {
-                        moveBody(chococatBody, bedMesh.position, baseSpeed); chococatMesh.lookAt(bedMesh.position);
+                        smartMoveBody(chococatBody, bedMesh.position, baseSpeed, currentScale); chococatMesh.lookAt(bedMesh.position);
                     } else {
-                        moveBody(chococatBody, catPosThree, 0); chococatMesh.position.y = 1.0; 
+                        smartMoveBody(chococatBody, catPosThree, 0, currentScale); chococatMesh.position.y = 1.0; 
                         chococatMesh.lookAt(playerPos.x, 1.0, playerPos.z); chococatMesh.rotateX(-Math.PI / 4);
                     }
                     if(!isSleeping && distToPlayer < 10) {
@@ -1720,7 +1527,7 @@
                     break;
                 case AI_STATE.BED_SHOCK:
                     statusEl.innerText = "ESTADO: ¡¿MI CAMA?! 💔"; statusEl.style.color = "white";
-                    moveBody(chococatBody, catPosThree, 0); shockTimer -= dt;
+                    smartMoveBody(chococatBody, catPosThree, 0, currentScale); shockTimer -= dt;
                     chococatMesh.lookAt(bedMesh.position); chococatMesh.rotation.z = 0; 
                     if(Math.random() < 0.05) showDialogue("noise", "sad-speak"); 
                     if(shockTimer <= 0) {
@@ -1730,7 +1537,7 @@
                     break;
                 case AI_STATE.INVESTIGATE_LAST_SEEN:
                     statusEl.innerText = "ESTADO: RASTREANDO..."; statusEl.style.color = "orange";
-                    moveBody(chococatBody, lastKnownPosition, currentSpeed * 1.2);
+                    smartMoveBody(chococatBody, lastKnownPosition, currentSpeed * 1.2, currentScale);
                     if(catPosThree.distanceTo(lastKnownPosition) < 3) { 
                         if(!canSee) { currentState = AI_STATE.SEARCH; notify("PERDIÓ EL RASTRO", "success"); }
                         else { currentState = AI_STATE.CHASE; } 
@@ -1739,22 +1546,22 @@
                     break;
                 case AI_STATE.SUSPICION:
                     statusEl.innerText = "ESTADO: INVESTIGANDO RUIDO"; statusEl.style.color = "yellow";
-                    moveBody(chococatBody, targetPosition, currentSpeed);
+                    smartMoveBody(chococatBody, targetPosition, currentSpeed, currentScale);
                     if(catPosThree.distanceTo(targetPosition) < 3) currentState = AI_STATE.SEARCH;
                     if(canSee) currentState = AI_STATE.CHASE;
                     break;
                 case AI_STATE.STUNNED:
-                    statusEl.innerText = "ESTADO: ATURDIDO / BAILANDO"; statusEl.style.color = "pink";
+                    statusEl.innerText = "ESTADO: ATURDIDO"; statusEl.style.color = "pink";
                     chococatBody.velocity.set(0,0,0);
                     stunTimer -= dt;
-                    chococatMesh.rotation.y += 5 * dt; // Gira de alegría o de golpe
+                    chococatMesh.rotation.y += 5 * dt;
                     if(stunTimer <= 0) {
-                        currentState = AI_STATE.CHASE; document.getElementById('kitty-overlay').style.display = 'none';
-                        kittyMesh.visible = false; chococatMesh.rotation.y = 0; evolve();
+                        currentState = AI_STATE.CHASE;
+                        chococatMesh.rotation.y = 0; evolve();
                     }
                     break;
             }
-            if(currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE) {
+            if(currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK) {
                 const distMoved = catPosThree.distanceTo(lastCatPos); lastCatPos.copy(catPosThree);
                 if (distMoved < 0.05) { 
                     stuckTimer += dt;
@@ -1774,16 +1581,27 @@
                     stuckTimer = 0; 
                 }
             }
-            const vol = Math.max(0, 1 - (distToPlayer / 60));
-            if(currentState === AI_STATE.STUNNED) gain.gain.value = 0;
-            else {
-                gain.gain.setTargetAtTime(vol * 0.8, listener.context.currentTime, 0.1);
-                let freq = 60 + (loneliness * 10); 
-                if(currentState === AI_STATE.SURVEILLANCE || currentState === AI_STATE.SLEEPING) freq = 30; 
-                if(currentState === AI_STATE.CHASE) freq = 250;
-                if(currentState === AI_STATE.LOVE_CHASE) freq = 400; 
-                if(currentState === AI_STATE.RAGE) freq = 100; 
-                osc.frequency.setTargetAtTime(freq, listener.context.currentTime, 0.1);
+
+            // --- LATIDOS DE CORAZÓN DE CHOCOCAT ---
+            let hbVol = Math.max(0, 1 - (distToPlayer / 60));
+            if (currentState === AI_STATE.STUNNED) hbVol = 0;
+
+            if (hbVol > 0.01) {
+                let hbInterval = 0.3 + (distToPlayer / 60) * 1.2;
+                if (currentState === AI_STATE.RAGE || currentState === AI_STATE.LOVE_CHASE || currentState === AI_STATE.CHASE) {
+                    hbInterval *= 0.6; // Latidos mucho más rápidos y tensos en persecución
+                }
+                if (currentState === AI_STATE.SURVEILLANCE || currentState === AI_STATE.SLEEPING) {
+                    hbInterval = 1.5; // Muy lento y relajado
+                }
+
+                heartbeatTimer += dt;
+                if (heartbeatTimer >= hbInterval) {
+                    heartbeatTimer = 0;
+                    playHeartbeat(hbVol, currentState, loneliness);
+                }
+            } else {
+                heartbeatTimer = 0; // Reinicia el ciclo si está muy lejos
             }
         }
 
@@ -1822,18 +1640,13 @@
 
         // Desktop Events
         document.addEventListener('mousedown', (e) => {
-            if(!gameStarted || isMobile || e.target.tagName === 'BUTTON' || e.target.closest('.action-btn')) return;
+            if(!gameStarted || isMobile || e.target.tagName === 'BUTTON' || e.target.closest('.action-btn') || e.target.closest('#menu-container')) return;
             if(!controls.isLocked && !projectileCameraMode) { controls.lock(); return; }
             spawnThrowable(true);
         });
 
         window.onkeydown = (e) => {
             if(!gameStarted) return;
-            
-            if(musicVideoPromptActive) {
-                if(e.code === 'KeyY') { window.triggerVideoAccept(); return; }
-                if(e.code === 'KeyN') { window.triggerVideoReject(); return; }
-            }
 
             if(e.code === 'KeyW') { keys.w = 1; if(isSleeping) isSleeping = false; }
             if(e.code === 'KeyA') { keys.a = 1; if(isSleeping) isSleeping = false; }
@@ -1842,7 +1655,6 @@
             if(e.code === 'ShiftLeft') keys.shift = 1;
             
             if(e.code === 'KeyF') { flashLight.intensity = flashLight.intensity > 0 ? 0 : 200; }
-            if(e.code === 'KeyE') summonHelloKitty();
             if(e.code === 'KeyL') { emergencyOn = !emergencyOn; emergencyOn ? scene.add(emergencyLight) : scene.remove(emergencyLight); }
             if(e.code === 'KeyO') { currentLang = currentLang === 'es' ? 'en' : 'es'; showDialogue('start'); }
             if(e.code === 'KeyC') { tryEat(); }
@@ -1942,7 +1754,6 @@
             // Botones Virtuales
             document.getElementById('btn-throw').addEventListener('touchstart', (e) => { e.preventDefault(); spawnThrowable(true); });
             document.getElementById('btn-interact').addEventListener('touchstart', (e) => { e.preventDefault(); tryInteract(); });
-            document.getElementById('btn-kitty').addEventListener('touchstart', (e) => { e.preventDefault(); summonHelloKitty(); });
             
             // Botón de Luz de Emergencia
             const btnLight = document.getElementById('btn-light');
@@ -1959,7 +1770,6 @@
         }
 
 
-        // CORRECCIÓN: Evitamos la fuga de memoria eliminando los proyectiles inactivos del array principal
         function updateThrowables(dt) {
             for (let i = throwables.length - 1; i >= 0; i--) {
                 const obj = throwables[i];
@@ -2068,5 +1878,4 @@
         window.addEventListener('orientationchange', () => setTimeout(handleResize, 200));
     </script>
 </body>
-
 </html>
