@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Escape: Chococat & Kuromi's Mischief (Enhanced)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Courier New', Courier, monospace; touch-action: none; user-select: none; -webkit-user-select: none; }
+        
+        /* --- UI PRINCIPAL --- */
+        #ui {
+            position: absolute; top: 10px; left: 10px; color: white; pointer-events: none;
+            text-shadow: 1px 1px 2px black; z-index: 5; display: none; /* Oculto hasta elegir dificultad */
+        }
+        #status { font-size: 24px; font-weight: bold; }
+        #objective { font-size: 20px; color: gold; margin-top: 5px; }
+        #stealth-indicator { font-size: 20px; margin-top: 5px; font-weight: bold; transition: color 0.3s; }
+        #controls { margin-top: 10px; font-size: 14px; opacity: 0.8; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 5px; pointer-events: auto;}
+        #debug-controls { 
+            margin-top: 10px; font-size: 12px; color: cyan; background: rgba(0,0,50,0.7); 
+            padding: 5px; border-radius: 5px; display: none; border: 1px solid cyan;
+        }
+        
+        #kitty-status { 
+            margin-top: 15px; font-size: 20px; font-weight: bold; color: #ff69b4; 
+            text-shadow: 0 0 5px #ff69b4;
+        }
+
+        #kuromi-status {
+            margin-top: 5px; font-size: 18px; font-weight: bold; color: #a020f0; 
+            text-shadow: 0 0 5px #a020f0; display: none; 
+        }
+
+        #melody-status {
+            margin-top: 5px; font-size: 18px; font-weight: bold; color: #ffb7c5; 
+            text-shadow: 0 0 5px #ffb7c5; display: none; 
+        }
+
+        #molang-status {
+            margin-top: 5px; font-size: 18px; font-weight: bold; color: #ffffff; 
+            text-shadow: 0 0 5px #ff69b4; display: none; 
+        }
+        
+        #grace-period {
+            margin-top: 10px; color: cyan; font-weight: bold; 
+            animation: blink 1s infinite; display: none;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* --- CONTROLES MÓVILES --- */
+        #mobile-controls {
+            display: none; position: absolute; bottom: 30px; right: 30px;
+            grid-template-columns: 1fr 1fr; gap: 15px; z-index: 10; pointer-events: none;
+        }
+        .action-btn {
+            width: 65px; height: 65px; border-radius: 50%;
+            background: rgba(0, 0, 0, 0.4); border: 2px solid rgba(255, 255, 255, 0.5);
+            color: white; font-size: 28px; display: flex;
+            justify-content: center; align-items: center; pointer-events: auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .action-btn:active { background: rgba(255, 255, 255, 0.3); transform: scale(0.95); }
+
+        #joystick-base {
+            position: absolute; width: 120px; height: 120px;
+            border-radius: 50%; background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: none; z-index: 10; pointer-events: none;
+        }
+        #joystick-stick {
+            position: absolute; top: 35px; left: 35px;
+            width: 50px; height: 50px; border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6); box-shadow: 0 0 10px black;
+        }
+
+        /* --- MENÚ DE INICIO --- */
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 5, 0.98); z-index: 20;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; text-align: center;
+        }
+        #start-screen h1 { font-size: 60px; color: #ff69b4; text-shadow: 0 0 20px #ff69b4; margin-bottom: 40px; }
+        #start-screen p { font-size: 24px; margin-bottom: 30px; color: #ddd; }
+        
+        .difficulty-btn {
+            background: transparent; border: 2px solid white; color: white;
+            padding: 15px 40px; margin: 10px; font-size: 24px; cursor: pointer;
+            font-family: 'Courier New', Courier, monospace; transition: all 0.3s;
+            width: 80%; max-width: 400px; display: block; border-radius: 10px;
+        }
+        .difficulty-btn:hover { transform: scale(1.05); }
+        
+        .btn-easy { border-color: lime; color: lime; }
+        .btn-easy:hover, .btn-easy:active { background: lime; color: black; }
+        
+        .btn-medium { border-color: yellow; color: yellow; }
+        .btn-medium:hover, .btn-medium:active { background: yellow; color: black; }
+        
+        .btn-hard { border-color: orange; color: orange; }
+        .btn-hard:hover, .btn-hard:active { background: orange; color: black; }
+
+        .btn-granny { border-color: #ff0000; color: #ff0000; background: #220000; font-weight: bold; animation: pulseRed 2s infinite; }
+        .btn-granny:hover, .btn-granny:active { background: #ff0000; color: white; box-shadow: 0 0 30px red; }
+
+        .btn-debug { border-color: #00ffff; color: #00ffff; border-style: dashed; }
+        .btn-debug:hover, .btn-debug:active { background: #00ffff; color: black; }
+
+        @keyframes pulseRed { 0% { box-shadow: 0 0 5px #550000; } 50% { box-shadow: 0 0 20px #ff0000; } 100% { box-shadow: 0 0 5px #550000; } }
+
+        /* --- NOTIFICACIONES --- */
+        #alerts-container {
+            position: absolute; top: 50px; right: 20px; width: 350px; max-width: 90%;
+            display: flex; flex-direction: column; align-items: flex-end; 
+            pointer-events: none; z-index: 8;
+        }
+        .alert-box {
+            background: rgba(50, 0, 0, 0.8); color: #ff3333; padding: 15px; margin-bottom: 10px;
+            border-right: 5px solid red; font-family: 'Courier New', monospace; font-weight: bold;
+            font-size: 16px; text-transform: uppercase;
+            box-shadow: -5px 5px 10px rgba(0,0,0,0.5);
+            animation: slideIn 0.3s ease-out, pulseAlert 1s infinite alternate;
+            opacity: 0.9;
+        }
+        .alert-warning { border-color: orange; color: orange; background: rgba(50, 30, 0, 0.8); }
+        .alert-danger { border-color: red; color: red; background: rgba(50, 0, 0, 0.8); }
+        .alert-info { border-color: cyan; color: cyan; background: rgba(0, 30, 50, 0.8); }
+        .alert-success { border-color: lime; color: lime; background: rgba(0, 50, 0, 0.8); }
+        .alert-purple { border-color: #a020f0; color: #d8bfd8; background: rgba(40, 0, 60, 0.8); }
+        .alert-pink { border-color: #ffb7c5; color: #ffe4e1; background: rgba(60, 0, 30, 0.8); }
+
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 0.9; } }
+        @keyframes pulseAlert { from { opacity: 0.8; } to { opacity: 1; } }
+
+        /* --- MIRA --- */
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; width: 8px; height: 8px;
+            background: white; border-radius: 50%; transform: translate(-50%, -50%);
+            opacity: 0.8; pointer-events: none; z-index: 5; display: none; /* Oculto inicio */
+            border: 1px solid black;
+        }
+
+        /* --- DIÁLOGOS --- */
+        #dialogue-box {
+            position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
+            width: 80%; max-width: 600px; text-align: center; color: #fff; font-size: 24px;
+            font-weight: bold; text-shadow: 2px 2px 0 #000; pointer-events: none;
+            background: rgba(0, 0, 0, 0.7); padding: 15px; border-radius: 10px;
+            border: 2px solid #555; display: none; z-index: 6;
+        }
+        .chococat-speak { color: #ff3333; border-color: #ff3333 !important; }
+        .kuromi-speak { color: #dda0dd; border-color: #800080 !important; font-family: cursive; }
+        .kuromi-love-speak { color: #ff69b4; border-color: #ff1493 !important; font-family: cursive; font-weight: bold; text-shadow: 0 0 5px #ff1493; background: rgba(50, 0, 30, 0.8) !important;}
+        .melody-speak { color: #ffb7c5; border-color: #ff69b4 !important; font-family: 'Comic Sans MS', cursive, sans-serif; font-style: italic; }
+        .molang-speak { color: #ffffff; border-color: #ffffff !important; font-family: 'Comic Sans MS', cursive, sans-serif; font-weight: bold; background: rgba(255, 150, 200, 0.4) !important; text-shadow: 1px 1px 2px #ff69b4; }
+        .love-speak { color: #ff00ff; border-color: #ff00ff !important; font-style: italic; }
+        .rage-speak { color: #990000; border-color: #ff0000 !important; font-size: 30px; border-width: 5px !important; }
+        .sad-speak { color: #8888ff; border-color: #0000ff !important; font-style: italic; font-size: 20px; }
+        .kitty-speak { color: #ff69b4; border-color: #ff69b4 !important; font-family: 'Arial Rounded MT Bold', sans-serif; }
+        .system-speak { color: #ffff00; border-color: #ffff00 !important; }
+        .abduct-speak { color: #aa00aa; border-color: #aa00aa !important; font-size: 28px; background: #000 !important; }
+        .final-speak { color: #ff0000; border-color: #000 !important; font-size: 40px; text-shadow: 0 0 10px red; background: transparent !important; }
+
+        /* --- PANTALLAS DE ESTADO --- */
+        #jumpscare, #win-screen, #abduct-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            flex-direction: column; justify-content: center; align-items: center; z-index: 25; text-align: center;
+        }
+        #jumpscare { background: black; color: red; }
+        #win-screen { background: white; color: black; z-index: 26; }
+        #abduct-overlay { background: black; z-index: 9; opacity: 0; transition: opacity 2s; }
+        
+        #sleep-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); pointer-events: none; z-index: 4;
+            justify-content: center; align-items: center; color: #aaa; font-size: 30px; text-align: center;
+            flex-direction: column;
+        }
+
+        #jumpscare h1 { font-size: 15vw; margin: 0; }
+        #win-screen h1 { font-size: 15vw; margin: 0; color: #00cc00; }
+        #jumpscare p, #win-screen p { font-size: 20px; cursor: pointer; text-decoration: underline; margin-top: 20px;}
+        
+        /* --- EFECTOS VISUALES --- */
+        #kitty-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 105, 180, 0.2); pointer-events: none; z-index: 4;
+            justify-content: center; align-items: center; color: #ff69b4; font-size: 50px; font-weight: bold;
+        }
+        #love-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 100px #ff00ff; pointer-events: none; z-index: 3;
+            animation: pulseLove 2s infinite;
+        }
+        #rage-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 150px #ff0000; pointer-events: none; z-index: 3;
+            background: rgba(100, 0, 0, 0.2);
+        }
+        #ignore-vignette {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            box-shadow: inset 0 0 200px #000000; pointer-events: none; z-index: 2;
+        }
+        @keyframes pulseLove { 0% { opacity: 0.3; } 50% { opacity: 0.8; } 100% { opacity: 0.3; } }
+
+        /* --- UI PROMOCIONAL VIDEOCLIP --- */
+        #video-prompt {
+            display: none; position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+            text-align: center; background: rgba(80, 0, 80, 0.85); border: 4px solid #ff69b4; 
+            padding: 20px; width: 85%; max-width: 500px; z-index: 15; border-radius: 15px; box-shadow: 0 0 30px #ff1493;
+            font-family: 'Courier New', monospace;
+        }
+        #video-prompt h2 { color: #ffb7c5; margin-top: 0; font-size: 28px; text-shadow: 2px 2px 4px black; }
+        #video-prompt p { color: white; font-size: 18px; font-weight: bold; }
+        #video-prompt .highlight { color: yellow; font-size: 18px; margin-top: 15px; animation: pulseAlert 1s infinite alternate; }
+        .prompt-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+        .prompt-buttons button { padding: 15px 25px; font-weight: bold; font-size: 18px; border-radius: 10px; border: none; cursor: pointer; pointer-events: auto; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+                "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="start-screen">
+        <h1 style="font-size: 10vw;">ESCAPE:<br>CHOCOCAT'S RAGE</h1>
+        <p>Selecciona tu dificultad</p>
+        <button class="difficulty-btn btn-easy" onclick="setDifficulty('easy')">
+            FÁCIL<br><span style="font-size:14px">Son lentos y ciegos</span>
+        </button>
+        <button class="difficulty-btn btn-medium" onclick="setDifficulty('medium')">
+            NORMAL<br><span style="font-size:14px">Experiencia estándar</span>
+        </button>
+        <button class="difficulty-btn btn-hard" onclick="setDifficulty('hard')">
+            DIFÍCIL<br><span style="font-size:14px">Corren rápido y te ven bien</span>
+        </button>
+        <button class="difficulty-btn btn-granny" onclick="setDifficulty('granny')">
+            MODO GRANNY<br><span style="font-size:14px">¡OÍDO ABSOLUTO + OSCURIDAD!</span>
+        </button>
+        <button class="difficulty-btn btn-debug" onclick="setDifficulty('debug')">
+            MODO PRUEBAS<br><span style="font-size:14px">Debug IA y Físicas</span>
+        </button>
+    </div>
+
+    <!-- UI DEL VIDEOCLIP -->
+    <div id="video-prompt">
+        <h2>🎬 ¡ESTRENO MUNDIAL! 🎬</h2>
+        <p>Kuromi y Chococat quieren mostrarte su nuevo videoclip musical exclusivo.</p>
+        <div class="prompt-buttons">
+            <button onclick="triggerVideoAccept()" style="background:lime; color:black;">¡ACEPTAR!</button>
+            <button onclick="triggerVideoReject()" style="background:red; color:white;">RECHAZAR</button>
+        </div>
+        <p class="highlight" id="video-keys-hint">También puedes pulsar [Y] o [N]</p>
+    </div>
+
+    <div id="kitty-overlay"></div>
+    <div id="love-overlay"></div>
+    <div id="rage-overlay"></div>
+    <div id="ignore-vignette"></div>
+    <div id="abduct-overlay"></div>
+    <div id="dialogue-box"></div>
+    
+    <div id="sleep-overlay">
+        <div>Zzz...</div>
+        <div style="font-size: 20px; color: yellow; margin-top: 20px;">Levántate con sigilo (Botón de Correr / SHIFT)</div>
+        <div style="font-size: 20px; color: red;">SI HACES RUIDO ÉL SE ENOJARÁ</div>
+    </div>
+
+    <div id="alerts-container"></div>
+
+    <!-- JOYSTICK Y BOTONES MÓVILES -->
+    <div id="joystick-base">
+        <div id="joystick-stick"></div>
+    </div>
+    
+    <div id="mobile-controls">
+        <div class="action-btn" id="btn-kitty">💖</div>
+        <div class="action-btn" id="btn-throw">📦</div>
+        <div class="action-btn" id="btn-run">🏃</div>
+        <div class="action-btn" id="btn-interact">🖐️</div>
+    </div>
+
+    <div id="ui">
+        <div id="status">ESTADO: INICIANDO</div>
+        <div id="stealth-indicator" style="color: lime">👁️ OCULTO</div>
+        <div id="objective">LLAVES: 0/3 🗝️</div>
+        <div id="grace-period">🛡 INMUNIDAD 🛡</div>
+        <div id="kitty-status">💖 HELLO KITTY: PATRULLANDO</div>
+        <div id="kuromi-status">😈 KUROMI: PATRULLANDO</div>
+        <div id="melody-status">🌸 MY MELODY: PASEANDO</div>
+        <div id="molang-status">🐰 MOLANG: SALTANDO</div>
+        <div id="controls">
+            WASD: Mover | SHIFT: Correr/Sigilo | F: Linterna<br>
+            L: Luz Emergencia | <b>C: Comer</b><br>
+            CLICK: Tirar Caja | <b>G: Dormir (En cama)</b><br>
+            <b>E: Llamar a Hello Kitty</b>
+        </div>
+        <div id="debug-controls">
+            <b>MODO DEBUG:</b><br>
+            [1-4] IA Chococat | [B] Lluvia Cajas<br>
+            [I] Invisibilidad | <b>[V] Cámara Proyectil</b><br>
+        </div>
+    </div>
+    <div id="crosshair"></div>
+    
+    <div id="jumpscare">
+        <h1 id="jumpscare-text">¡TE ATRAPÓ!</h1>
+        <p onclick="location.reload()">REINTENTAR</p>
+    </div>
+
+    <div id="win-screen">
+        <h1>¡ESCAPASTE!</h1>
+        <p>Lograste salir... pero él sigue esperando.</p>
+        <p onclick="location.reload()">JUGAR DE NUEVO</p>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import * as CANNON from 'cannon-es';
+
+        // --- SCENE SETUP ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.008); 
+        scene.background = new THREE.Color(0x050505);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        const world = new CANNON.World();
+        world.gravity.set(0, -9.82, 0);
+        const slipMat = new CANNON.Material('slippery');
+        const slipContact = new CANNON.ContactMaterial(slipMat, slipMat, { friction: 0.0, restitution: 0.0 });
+        world.addContactMaterial(slipContact);
+
+        // --- AUDIO ---
+        const listener = new THREE.AudioListener();
+        camera.add(listener);
+        const osc = listener.context.createOscillator();
+        const gain = listener.context.createGain();
+        osc.connect(gain); gain.connect(listener.context.destination);
+        osc.type = 'sawtooth'; osc.frequency.value = 50; gain.gain.value = 0;
+        osc.start();
+
+        // --- DETECCIÓN MÓVIL ---
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        // --- GESTIÓN DE DIFICULTAD ---
+        let gameStarted = false;
+        let difficultySettings = {
+            speedMultiplier: 1.0,
+            detectionRadius: 100,
+            lonelinessRate: 1.0,
+            aggroPersistence: 5.0,
+            keysRequired: 3,
+            hearFootsteps: false,
+            debug: false
+        };
+
+        window.setDifficulty = (mode) => {
+            if (listener.context.state === 'suspended') {
+                listener.context.resume();
+            }
+
+            const screen = document.getElementById('start-screen');
+            screen.style.display = 'none';
+            document.getElementById('ui').style.display = 'block';
+            document.getElementById('crosshair').style.display = 'block';
+            
+            if (isMobile) {
+                document.getElementById('mobile-controls').style.display = 'grid';
+                document.getElementById('controls').innerHTML = "Usa el joystick (izq) y la pantalla (der) para mirar.<br>Toca los botones para acciones.";
+                document.getElementById('video-keys-hint').style.display = 'none';
+            }
+
+            if(mode === 'easy') {
+                difficultySettings = { speedMultiplier: 0.7, detectionRadius: 60, lonelinessRate: 0.5, aggroPersistence: 2.0, keysRequired: 3, hearFootsteps: false, debug: false };
+                notify("MODO FÁCIL", "success");
+            } else if (mode === 'hard') {
+                difficultySettings = { speedMultiplier: 1.4, detectionRadius: 180, lonelinessRate: 2.0, aggroPersistence: 10.0, keysRequired: 4, hearFootsteps: false, debug: false };
+                notify("MODO DIFÍCIL", "warning");
+            } else if (mode === 'granny') {
+                difficultySettings = { speedMultiplier: 1.8, detectionRadius: 300, lonelinessRate: 3.0, aggroPersistence: 20.0, keysRequired: 5, hearFootsteps: true, debug: false };
+                scene.fog = new THREE.FogExp2(0x000000, 0.03); 
+                notify("MODO GRANNY", "danger");
+            } else if (mode === 'debug') {
+                difficultySettings = { speedMultiplier: 1.0, detectionRadius: 100, lonelinessRate: 0.0, aggroPersistence: 5.0, keysRequired: 3, hearFootsteps: false, debug: true };
+                document.getElementById('debug-controls').style.display = 'block';
+                notify("MODO PRUEBAS ACTIVADO", "info");
+            } else {
+                difficultySettings = { speedMultiplier: 1.0, detectionRadius: 100, lonelinessRate: 1.0, aggroPersistence: 6.0, keysRequired: 3, hearFootsteps: false, debug: false };
+                notify("MODO NORMAL", "info");
+            }
+
+            totalKeys = difficultySettings.keysRequired;
+            document.getElementById('objective').innerText = `LLAVES: 0/${totalKeys} 🗝️`;
+            respawnKeys();
+            
+            gameStarted = true;
+            if(!isMobile) controls.lock();
+        };
+
+        // --- SISTEMA DE NOTIFICACIONES ---
+        function notify(text, type = 'danger', duration = 4000) {
+            const container = document.getElementById('alerts-container');
+            const alert = document.createElement('div');
+            alert.className = `alert-box alert-${type}`;
+            alert.innerText = text;
+            container.appendChild(alert);
+            
+            const beep = listener.context;
+            const notifOsc = beep.createOscillator();
+            const notifGain = beep.createGain();
+            notifOsc.connect(notifGain); notifGain.connect(beep.destination);
+            
+            if(type === 'purple') {
+                notifOsc.type = 'square'; notifOsc.frequency.setValueAtTime(150, beep.currentTime);
+                notifOsc.frequency.exponentialRampToValueAtTime(50, beep.currentTime + 0.3);
+            } else if (type === 'pink') {
+                notifOsc.type = 'sine'; notifOsc.frequency.setValueAtTime(600, beep.currentTime);
+                notifOsc.frequency.exponentialRampToValueAtTime(900, beep.currentTime + 0.3);
+            } else if (type === 'danger') {
+                notifOsc.type = 'sawtooth'; notifOsc.frequency.setValueAtTime(100, beep.currentTime);
+            } else {
+                notifOsc.type = 'triangle'; notifOsc.frequency.setValueAtTime(400, beep.currentTime);
+            }
+            
+            notifOsc.start(); 
+            notifGain.gain.setValueAtTime(0.1, beep.currentTime);
+            notifGain.gain.exponentialRampToValueAtTime(0.00001, beep.currentTime + 0.5);
+
+            setTimeout(() => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }, duration);
+        }
+
+        // --- DIÁLOGOS ---
+        let currentLang = 'es';
+        const dialogues = {
+            start: { es: "Busca las llaves...", en: "Find the keys..." },
+            found: { es: "¡TE ENCONTRÉ!", en: "FOUND YOU!" },
+            grow: { es: "¡ESTÁ CRECIENDO!", en: "IT'S GROWING!" },
+            kitty_help: { es: "¡Corre ahora!", en: "Run now!" },
+            lost_player: { es: "¿A dónde fuiste?", en: "Where did you go?" }, 
+            
+            love_start: { es: "¡Mis cálculos indican que me amas!", en: "My calculations indicate you love me!" },
+            love_chase_1: { es: "¡Tus signos vitales se aceleran al mirarme!", en: "Your vital signs spike when you look at me!" },
+            love_chase_2: { es: "¡Físicamente no puedes escapar de mi amor!", en: "You physically cannot escape my love!" },
+            
+            k_love_start: { es: "¡N-No me mires tanto, tonto!", en: "D-Don't stare at me, dummy!" },
+            k_love_chase: { es: "¡V-Ven aquí! ¡Solo te daré un abrazo!", en: "C-Come here! I'll just give you a hug!" },
+            k_love_catch: { es: "¡Mío! Digo... ¡Te atrapé!", en: "Mine! I mean... Caught you!" },
+            
+            ignore_1: { es: "¿Por qué me ignoras?", en: "Why do you ignore me?" },
+            ignore_2: { es: "¡MÍRAME!", en: "LOOK AT ME!" },
+            ignore_punish: { es: "¡NO ME DES LA ESPALDA!", en: "DON'T TURN YOUR BACK ON ME!" },
+
+            food_beg_1: { es: "¿Es eso pizza? Dame...", en: "Is that pizza? Give me..." },
+            food_insistent: { es: "¡DAME LA PIZZA AHORA!", en: "GIVE ME THE PIZZA NOW!" },
+            food_rage: { es: "¡¡¡CÓMO TE ATREVES!!!", en: "HOW DARE YOU!!!" },
+            eating: { es: "Comiendo pizza...", en: "Eating pizza..." },
+
+            forbidden_enter: { es: "¡DIJE QUE NO!", en: "I SAID NO!" },
+            escape_catch: { es: "¡NO TE VAS A IR!", en: "YOU ARE NOT LEAVING!" },
+            return_home: { es: "Quédate aquí. Te estaré vigilando.", en: "Stay here. I'm watching you." },
+            door_locked: { es: "Necesito más llaves...", en: "Need more keys..." },
+            key_found: { es: "¡Llave encontrada!", en: "Key found!" },
+            
+            k_intro: { es: "¿Crees que puedes ganar?", en: "Think you can win?" },
+            k_mischief: { es: "¡Ups! Moví tu llave ji ji ji", en: "Oops! Moved your key hee hee" },
+            k_question_1: { es: "¿Chococat es lindo, verdad?", en: "Chococat is cute, right?" },
+            k_question_2: { es: "¿Tienes miedo?", en: "Are you scared?" },
+            k_mess: { es: "¡Qué desorden!", en: "What a mess!" },
+            k_shoo: { es: "¡Vete de aquí Melody!", en: "Go away Melody!" },
+            k_chase_melody: { es: "¡Deja de seguirlo!", en: "Stop following him!" },
+            k_punished: { es: "¡Ay! ¡Perdón Kitty!", en: "Ouch! Sorry Kitty!" },
+            
+            m_hi: { es: "¡Hola! ¿Quieres ser mi amigo?", en: "Hi! Wanna be friends?" },
+            m_follow: { es: "¡Te acompaño! Es peligroso...", en: "I'll go with you! It's dangerous..." },
+            m_scared: { es: "¡Ay! ¡Kuromi da miedo!", en: "Eek! Kuromi is scary!" },
+            m_found_key: { es: "¿Buscas esto?", en: "Looking for this?" },
+            m_humming: { es: "La la la ~ 🎵", en: "La la la ~ 🎵" },
+
+            m_paws_notice: { es: "¿Estabas mirando mis patitas rosadas? ¡Qué lindo de tu parte! ~ 🌸", en: "Were you looking at my pink paws? That's so sweet! ~ 🌸" },
+            m_paws_ignore_1: { es: "¡Espérame por fiiiis! ¿No quieres tomar el té conmigo? ☕", en: "Wait for me pleeease! Don't you want to have tea with me? ☕" },
+            m_paws_ignore_2: { es: "¡Oye! ¡Horneé galletitas de almendra para ti! ¡Mírame! 🍪", en: "Hey! I baked almond cookies for you! Look at me! 🍪" },
+            m_paws_ignore_3: { es: "¡NO ME IGNORES! ¡Las patitas de Melody son las más suavecitas del mundo! 🌸", en: "DON'T IGNORE ME! Melody's paws are the softest in the world! 🌸" },
+            m_paws_happy: { es: "¡Ji ji! ¡Sabía que querías verlas! Eres un buen amigo. ~ 💖", en: "Hee hee! I knew you wanted to see them! You're a good friend. ~ 💖" },
+
+            hk_fan: { es: "¡Eres tú! ¡Soy tu fan #1!", en: "It's you! I'm your #1 fan!" },
+            hk_lost: { es: "¿DÓNDE ESTÁS? ¡NO TE VAYAS!", en: "WHERE ARE YOU? DON'T LEAVE!" },
+            hk_angry_k: { es: "¡KUROMI! ¡DEJA A MELODY!", en: "KUROMI! LEAVE MELODY ALONE!" },
+            hk_hug: { es: "¡Abrazo!", en: "Hug!" },
+
+            mo_hi: { es: "¡Piu piu! (¡Amigo!)", en: "Piu piu! (Friend!)" },
+            mo_hug: { es: "¡Ta da! (¡Abrazo!)", en: "Ta da! (Hug!)" },
+            mo_food: { es: "¡Ko ko! (¡Comida!)", en: "Ko ko! (Food!)" },
+
+            trap_ending: { es: "¿Creíste que podías engañarme?", en: "Thought you could trick me?" },
+            keys_stolen: { es: "Son mías... ¡Empieza de nuevo!", en: "They are mine... Start over!" },
+            sleep_join: { es: "Dormiré contigo...", en: "I will sleep with you..." },
+            wake_rage: { es: "¿ME QUERÍAS DEJAR SOLO?", en: "DID YOU WANT TO LEAVE ME ALONE?" },
+            wake_stealth: { es: "Zzz... te quiero... Zzz...", en: "Zzz... love you... Zzz..." },
+            whiskers_sense: { es: "Mis bigotes sienten tus pasos...", en: "My whiskers feel your steps..." },
+            whiskers_catch: { es: "¡Sabía que irías por ahí!", en: "I knew you'd go there!" },
+            noise: { es: "¿Qué fue ese ruido?", en: "What was that noise?" },
+
+            // DIÁLOGOS DEL VIDEOCLIP
+            mv_offer: { es: "¡Oye! Chococat y yo hicimos un videoclip increíble. ¿Quieres verlo?", en: "Hey! Chococat and I made an awesome music video. Wanna watch?" },
+            mv_accept_k: { es: "¡Jeje! ¡Sabía que tendrías buen gusto musical!", en: "Hehe! I knew you had good musical taste!" },
+            mv_accept_c: { es: "¡Excelente! Procesando métricas de audiencia y acústica perfecta...", en: "Excellent! Processing audience metrics and perfect acoustics..." },
+            mv_reject_k: { es: "¡¿Acaso no aprecias el verdadero arte vocal?! ¡TE VAS A ARREPENTIR!", en: "Don't you appreciate true vocal art?! YOU WILL REGRET THIS!" },
+            mv_reject_c: { es: "¡Mis algoritmos predijeron un 99% de aceptación! ¡Fallo crítico! ¡INICIANDO VENGANZA!", en: "My algorithms predicted 99% acceptance! Critical failure! INITIATING REVENGE!" },
+        };
+
+        function showDialogue(key, type = 'system-speak') {
+            const box = document.getElementById('dialogue-box');
+            const text = dialogues[key] ? dialogues[key][currentLang] : key;
+            box.innerText = text;
+            box.className = ''; box.classList.add(type);
+            box.style.display = 'block';
+            setTimeout(() => { box.style.display = 'none'; }, 3500);
+        }
+
+        // --- JUGADOR ---
+        const controls = new PointerLockControls(camera, document.body);
+        const playerBody = new CANNON.Body({
+            mass: 5, shape: new CANNON.Sphere(1), position: new CANNON.Vec3(0, 2, 0), fixedRotation: true,
+            material: slipMat
+        });
+        world.addBody(playerBody);
+
+        // --- VARIABLES GLOBALES ---
+        let keysCollected = 0;
+        let totalKeys = 3; 
+        let isAbducted = false;
+        let isSleeping = false; 
+        let bedBroken = false;
+        let shockTimer = 0;
+        let invisibleMode = false; 
+        let projectileCameraMode = false; 
+        let lastProjectile = null; 
+
+        let musicVideoOffered = false;
+        let musicVideoPromptActive = false;
+
+        // --- VISUALIZACIÓN DEBUG ---
+        const debugLineMat = new THREE.LineBasicMaterial({ color: 0xff0000 });
+        const debugLineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), new THREE.Vector3(0,10,0)]);
+        const visionLine = new THREE.Line(debugLineGeo, debugLineMat);
+        const targetLine = new THREE.Line(debugLineGeo, new THREE.LineBasicMaterial({ color: 0x00ff00 }));
+        scene.add(visionLine); scene.add(targetLine);
+        visionLine.visible = false; targetLine.visible = false;
+
+        // --- LUCES ---
+        const flashLight = new THREE.SpotLight(0xffffff, 200, 60, 0.6, 0.5, 1);
+        flashLight.castShadow = true;
+        flashLight.position.set(0.5, -0.3, 0);
+        flashLight.target.position.set(0, 0, -10);
+        camera.add(flashLight); camera.add(flashLight.target);
+        scene.add(new THREE.AmbientLight(0x222222, 0.6));
+        const emergencyLight = new THREE.AmbientLight(0xffffff, 2);
+        let emergencyOn = false;
+
+        // --- MAPA ---
+        const MAP_SIZE = 400; 
+        const FORBIDDEN_Z = -160; 
+        const EXIT_Z = 180; 
+
+        const floorGeo = new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE);
+        const floorMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
+        scene.add(floor);
+        const floorBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane(), material: slipMat });
+        floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+        world.addBody(floorBody);
+
+        const walls = [];
+        const boxGeo = new THREE.BoxGeometry(4, 6, 4);
+        const boxMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        
+        for(let i=0; i<300; i++) { 
+            const x = (Math.random() - 0.5) * (MAP_SIZE - 20);
+            const z = (Math.random() - 0.5) * (MAP_SIZE - 20);
+            if(Math.abs(x) < 20 && Math.abs(z) < 20) continue; 
+            if(z < FORBIDDEN_Z) continue; 
+            if(z > EXIT_Z - 10) continue; 
+
+            const wall = new THREE.Mesh(boxGeo, boxMat);
+            wall.scale.y = 1 + Math.random() * 2; 
+            wall.position.set(x, 3 * wall.scale.y, z);
+            wall.castShadow = true; wall.receiveShadow = true;
+            scene.add(wall); walls.push(wall);
+            const wb = new CANNON.Body({ mass: 0, shape: new CANNON.Box(new CANNON.Vec3(2, 3 * wall.scale.y, 2)), material: slipMat });
+            wb.position.copy(wall.position);
+            world.addBody(wb);
+        }
+
+        function createHidingBox(x, z, angle) {
+            const wallSettings = [
+                { sz: [8, 8, 1], pos: [0, 4, -3.5] },
+                { sz: [1, 8, 8], pos: [-3.5, 4, 0] },
+                { sz: [1, 8, 8], pos: [3.5, 4, 0] }  
+            ];
+            
+            wallSettings.forEach(ws => {
+                const geo = new THREE.BoxGeometry(ws.sz[0], ws.sz[1], ws.sz[2]);
+                const mat = new THREE.MeshStandardMaterial({ color: 0x223322 }); 
+                const mesh = new THREE.Mesh(geo, mat);
+                
+                const localPos = new THREE.Vector3(...ws.pos);
+                localPos.applyAxisAngle(new THREE.Vector3(0,1,0), angle);
+                
+                mesh.position.set(x + localPos.x, localPos.y, z + localPos.z);
+                mesh.rotation.y = angle;
+                mesh.castShadow = true; mesh.receiveShadow = true;
+                
+                scene.add(mesh);
+                walls.push(mesh); 
+                
+                const body = new CANNON.Body({ 
+                    mass: 0, 
+                    shape: new CANNON.Box(new CANNON.Vec3(ws.sz[0]/2, ws.sz[1]/2, ws.sz[2]/2)),
+                    material: slipMat
+                });
+                body.position.copy(mesh.position);
+                body.quaternion.setFromEuler(0, angle, 0);
+                world.addBody(body);
+            });
+        }
+
+        for(let i=0; i<15; i++) {
+            const hx = (Math.random() - 0.5) * (MAP_SIZE - 40);
+            const hz = (Math.random() - 0.5) * (MAP_SIZE - 40);
+            if(Math.abs(hx) < 30 && Math.abs(hz) < 30) continue; 
+            if(hz < FORBIDDEN_Z || hz > EXIT_Z - 20) continue;
+            const hRot = Math.random() * Math.PI * 2;
+            createHidingBox(hx, hz, hRot);
+        }
+
+        function createPlatform(x, y, z, width, depth) {
+            const geo = new THREE.BoxGeometry(width, 1, depth);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.8 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true; mesh.receiveShadow = true;
+            scene.add(mesh);
+            const body = new CANNON.Body({ mass: 0, shape: new CANNON.Box(new CANNON.Vec3(width/2, 0.5, depth/2)), material: slipMat });
+            body.position.copy(mesh.position);
+            world.addBody(body);
+            walls.push(mesh);
+            return { mesh, body };
+        }
+
+        function createRamp(x, y, z, width, length, angle) {
+            const geo = new THREE.BoxGeometry(width, 1, length);
+            const mat = new THREE.MeshStandardMaterial({ color: 0x664422 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            mesh.rotation.x = -angle;
+            scene.add(mesh);
+            const body = new CANNON.Body({ mass: 0, shape: new CANNON.Box(new CANNON.Vec3(width/2, 0.5, length/2)), material: slipMat });
+            body.position.copy(mesh.position);
+            body.quaternion.setFromEuler(-angle, 0, 0);
+            world.addBody(body);
+        }
+
+        createPlatform(60, 8, 60, 40, 40);
+        createPlatform(-60, 8, -60, 40, 40);
+        createPlatform(0, 10, 80, 50, 15);
+        createRamp(60, 4, 25, 8, 30, Math.PI / 6);
+        createRamp(-60, 4, -25, 8, 30, -Math.PI / 6);
+        
+        // PUERTA SALIDA
+        const doorGeo = new THREE.BoxGeometry(20, 15, 2);
+        const doorMat = new THREE.MeshStandardMaterial({ color: 0x444444, emissive: 0x111111 });
+        const doorMesh = new THREE.Mesh(doorGeo, doorMat);
+        doorMesh.position.set(0, 7.5, EXIT_Z + 5);
+        scene.add(doorMesh);
+        const doorBody = new CANNON.Body({ mass: 0, shape: new CANNON.Box(new CANNON.Vec3(10, 7.5, 1)) });
+        doorBody.position.copy(doorMesh.position);
+        world.addBody(doorBody);
+        const doorLight = new THREE.PointLight(0xff0000, 1, 40);
+        doorLight.position.set(0, 12, EXIT_Z);
+        scene.add(doorLight);
+
+        // CAMA
+        const bedGeo = new THREE.BoxGeometry(6, 2, 8);
+        const bedMat = new THREE.MeshStandardMaterial({ color: 0x880000 });
+        const bedMesh = new THREE.Mesh(bedGeo, bedMat);
+        bedMesh.position.set(20, 1, 20); 
+        scene.add(bedMesh);
+        const pillowGeo = new THREE.BoxGeometry(4, 1, 2);
+        const pillowMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const pillowMesh = new THREE.Mesh(pillowGeo, pillowMat);
+        pillowMesh.position.set(20, 2, 18);
+        scene.add(pillowMesh);
+        const bedBody = new CANNON.Body({ mass: 0, shape: new CANNON.Box(new CANNON.Vec3(3, 1, 4)) });
+        bedBody.position.copy(bedMesh.position);
+        world.addBody(bedBody);
+
+        // LLAVES
+        const keyItems = [];
+        const keyGeo = new THREE.TorusKnotGeometry(0.5, 0.2, 64, 8);
+        const keyMat = new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xaa4400 });
+        function spawnKeys() {
+            keyItems.forEach(k => scene.remove(k)); keyItems.length = 0;
+            for(let i=0; i<totalKeys; i++) {
+                let kx = (Math.random() - 0.5) * (MAP_SIZE - 40); 
+                let kz = (Math.random() - 0.5) * (MAP_SIZE - 40);
+                const onSecondFloor = Math.random() > 0.7;
+                let ky = 1.5;
+                if (onSecondFloor) {
+                    if (Math.random() > 0.5) { kx = 60 + (Math.random()-0.5)*30; kz = 60 + (Math.random()-0.5)*30; ky = 9.5; }
+                    else { kx = -60 + (Math.random()-0.5)*30; kz = -60 + (Math.random()-0.5)*30; ky = 9.5; }
+                }
+                const key = new THREE.Mesh(keyGeo, keyMat); key.position.set(kx, ky, kz);
+                scene.add(key); keyItems.push(key);
+                const kl = new THREE.PointLight(0xffaa00, 1, 10); kl.position.copy(key.position); scene.add(kl);
+            }
+        }
+        function respawnKeys() { spawnKeys(); }
+
+        // COMIDA
+        const foodItems = [];
+        const foodGeo = new THREE.BoxGeometry(1, 0.2, 1);
+        const foodMat = new THREE.MeshStandardMaterial({ color: 0x0000ff, emissive: 0x000055 });
+        for(let i=0; i<12; i++){ 
+            const fx = (Math.random() - 0.5) * (MAP_SIZE - 50); const fz = (Math.random() - 0.5) * (MAP_SIZE - 50);
+            if(fz < FORBIDDEN_Z) continue; 
+            const food = new THREE.Mesh(foodGeo, foodMat); food.position.set(fx, 0.1, fz);
+            scene.add(food); foodItems.push(food);
+        }
+
+        function animateModel(mesh, isMoving, dt, speedMultiplier = 1) {
+            if(!mesh) return;
+            if (isMoving) {
+                mesh.rotation.z = Math.sin(Date.now() * 0.005 * speedMultiplier) * 0.1;
+            } else {
+                mesh.rotation.z = Math.sin(Date.now() * 0.002) * 0.02;
+            }
+        }
+
+        // --- MODELOS ---
+        const loader = new GLTFLoader();
+
+        // HELLO KITTY
+        let kittyMesh; let kittyBody;
+        kittyMesh = new THREE.Group();
+        const kittyGeo = new THREE.CylinderGeometry(0.5, 0.5, 2, 32);
+        const kittyMat = new THREE.MeshStandardMaterial({ color: 0xff69b4, emissive: 0xff1493 });
+        const kPlaceholder = new THREE.Mesh(kittyGeo, kittyMat);
+        kittyMesh.add(kPlaceholder);
+        scene.add(kittyMesh);
+        
+        loader.load('HelloKitty.glb', function(gltf){
+             kittyMesh.remove(kPlaceholder); 
+             const model = gltf.scene;
+             model.scale.set(1.4, 1.4, 1.4);
+             model.traverse((c) => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+             kittyMesh.add(model); 
+        }, undefined, function(e){ console.log("Kitty Default"); });
+
+        kittyBody = new CANNON.Body({ mass: 10, shape: new CANNON.Sphere(1), position: new CANNON.Vec3(-10, 5, -10), fixedRotation: true, material: slipMat, linearDamping: 0.1 });
+        world.addBody(kittyBody);
+
+        // MY MELODY
+        let melodyMesh; let melodyBody;
+        melodyMesh = new THREE.Group();
+        const mGeo = new THREE.CylinderGeometry(0.6, 0.8, 1.8, 16);
+        const mMat = new THREE.MeshStandardMaterial({ color: 0xffb7c5 });
+        const mPlaceholder = new THREE.Mesh(mGeo, mMat); mPlaceholder.position.y = 0.9;
+        melodyMesh.add(mPlaceholder);
+        scene.add(melodyMesh);
+        
+        loader.load('MyMelody.glb', function(gltf){
+             melodyMesh.remove(mPlaceholder);
+             const model = gltf.scene;
+             model.scale.set(1.4, 1.4, 1.4);
+             model.traverse((c) => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+             melodyMesh.add(model);
+             document.getElementById('melody-status').style.display = 'block';
+        }, undefined, function(e){ console.log("Melody Default"); document.getElementById('melody-status').style.display = 'block'; });
+
+        melodyBody = new CANNON.Body({ mass: 8, shape: new CANNON.Sphere(1), position: new CANNON.Vec3(20, 5, 20), fixedRotation: true, material: slipMat, linearDamping: 0.1 });
+        world.addBody(melodyBody);
+
+        // KUROMI
+        let kuromiMesh; let kuromiBody;
+        kuromiMesh = new THREE.Group();
+        const kGeo = new THREE.ConeGeometry(0.8, 2, 16);
+        const kMat = new THREE.MeshStandardMaterial({ color: 0x550055 });
+        const kuPlaceholder = new THREE.Mesh(kGeo, kMat);
+        kuromiMesh.add(kuPlaceholder);
+        scene.add(kuromiMesh);
+
+        loader.load('Kuromi.glb', function(gltf){
+            kuromiMesh.remove(kuPlaceholder);
+            const model = gltf.scene;
+            model.scale.set(1.5, 1.5, 1.5);
+            model.traverse((c) => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+            kuromiMesh.add(model);
+            document.getElementById('kuromi-status').style.display = 'block';
+        }, undefined, function(e){ console.log("Kuromi Default"); });
+
+        kuromiBody = new CANNON.Body({ mass: 10, shape: new CANNON.Sphere(1), position: new CANNON.Vec3(-30, 5, 0), fixedRotation: true, material: slipMat, linearDamping: 0.1 });
+        world.addBody(kuromiBody);
+
+        // CHOCOCAT
+        let chococatMesh; let chococatBody;
+        chococatMesh = new THREE.Group();
+        const catGeo = new THREE.SphereGeometry(1);
+        const catMat = new THREE.MeshStandardMaterial({ color: 0x8B4513 }); 
+        const cPlaceholder = new THREE.Mesh(catGeo, catMat);
+        chococatMesh.add(cPlaceholder);
+        scene.add(chococatMesh);
+
+        loader.load('Chococat.glb', function (gltf) {
+            chococatMesh.remove(cPlaceholder);
+            const model = gltf.scene;
+            model.scale.set(1.5, 1.5, 1.5); 
+            model.traverse((c) => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; if(c.material) c.material.emissive = new THREE.Color(0x222222); } });
+            chococatMesh.add(model);
+        }, undefined, function (error) { console.log("Chococat Default"); });
+
+        chococatBody = new CANNON.Body({ mass: 20, shape: new CANNON.Sphere(1), position: new CANNON.Vec3(40, 1, 40), fixedRotation: true, material: slipMat, linearDamping: 0.1 });
+        world.addBody(chococatBody);
+
+        // MOLANG
+        let molangMesh; let molangBody;
+        molangMesh = new THREE.Group();
+        const moGeo = new THREE.SphereGeometry(0.9, 32, 32); 
+        const moMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+        const moPlaceholder = new THREE.Mesh(moGeo, moMat);
+        moPlaceholder.position.y = 0.9;
+        molangMesh.add(moPlaceholder);
+        scene.add(molangMesh);
+
+        loader.load('Molang.glb', function(gltf){
+             molangMesh.remove(moPlaceholder);
+             const model = gltf.scene;
+             model.scale.set(1.4, 1.4, 1.4);
+             model.traverse((c) => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+             molangMesh.add(model);
+             document.getElementById('molang-status').style.display = 'block';
+        }, undefined, function(e){ console.log("Molang Default"); document.getElementById('molang-status').style.display = 'block'; });
+
+        molangBody = new CANNON.Body({ mass: 10, shape: new CANNON.Sphere(0.9), position: new CANNON.Vec3(0, 5, -40), fixedRotation: true, material: slipMat, linearDamping: 0.1 });
+        world.addBody(molangBody);
+
+        // --- IA & LOGICA ---
+        const AI_STATE = { 
+            SEARCH: 0, SUSPICION: 1, CHASE: 2, STUNNED: 3, INVESTIGATE_LAST_SEEN: 4, 
+            LOVE_CHASE: 5, BEGGING_FOOD: 6, RAGE: 7, ABDUCTING: 8, SURVEILLANCE: 9, 
+            SLEEPING: 10, BED_SHOCK: 11, WAITING_VIDEO_RESPONSE: 12
+        };
+        let currentState = AI_STATE.SEARCH;
+        let targetPosition = new THREE.Vector3(); let lastKnownPosition = new THREE.Vector3(); 
+        let baseSpeed = 4.0; let currentScale = 1.0;
+        let stuckTimer = 0; let lostSightTimer = 0;
+        let stunTimer = 0; let surveillanceTimer = 0;
+        let lastCatPos = new THREE.Vector3();
+        const raycaster = new THREE.Raycaster();
+        let frustration = 0; let gazeTime = 0; let loneliness = 0; const LOVE_THRESHOLD = 3.0; let isLoveMode = false;
+        let kGazeTime = 0; let isKuromiLoveMode = false;
+        
+        let mGazeTime = 0; let mIgnoreTimer = 0; // Variables para My Melody
+        
+        let flags = { lonelinessLow: false, lonelinessHigh: false, zoneWarn: false, loveWarn: false, escapeWarn: false, noiseWarn: false };
+        let isEating = false; let eatingTimer = 0; let begTimer = 0;
+
+        // IA KUROMI
+        const K_STATE = { PATROL: 0, INTERROGATE: 1, MISCHIEF: 2, FLEE: 3, CHASE_MELODY: 4, LOVE_CHASE: 5, MUSIC_PROMPT: 6, REJECTED_RAGE: 7 };
+        let kuromiState = K_STATE.PATROL; let kuromiTarget = new THREE.Vector3(); let kuromiTimer = 0;
+
+        // IA MY MELODY
+        const M_STATE = { WANDER: 0, FOLLOW: 1, FLEE_KUROMI: 2, PERSISTENT_FOLLOW: 3 };
+        let melodyState = M_STATE.WANDER; let melodyTarget = new THREE.Vector3(); let melodyTimer = 0;
+
+        // IA HELLO KITTY
+        const HK_STATE = { WANDER: 0, FAN_CHASE: 1, FIERCE_SEARCH: 2, PROTECT_MELODY: 3 };
+        let kittyState = HK_STATE.WANDER; let kittyTarget = new THREE.Vector3();
+
+        // IA MOLANG
+        const MO_STATE = { WANDER: 0, FOLLOW: 1, EATING: 2 };
+        let molangState = MO_STATE.WANDER; let molangTarget = new THREE.Vector3();
+
+        // --- SISTEMA DE VIDEOCLIP ---
+        window.triggerVideoAccept = () => {
+            musicVideoPromptActive = false;
+            document.getElementById('video-prompt').style.display = 'none';
+            showDialogue('mv_accept_k', 'kuromi-speak');
+            setTimeout(() => showDialogue('mv_accept_c', 'chococat-speak'), 3000);
+            notify("¡LES ENCANTÓ QUE LO VIERAS!", "success");
+            
+            kuromiState = K_STATE.PATROL;
+            currentState = AI_STATE.STUNNED; // Chococat baila
+            stunTimer = 5.0;
+        };
+
+        window.triggerVideoReject = () => {
+            musicVideoPromptActive = false;
+            document.getElementById('video-prompt').style.display = 'none';
+            showDialogue('mv_reject_k', 'kuromi-speak');
+            setTimeout(() => showDialogue('mv_reject_c', 'rage-speak'), 3000);
+            notify("¡GRAVE ERROR! LOS OFENDISTE", "danger");
+            
+            kuromiState = K_STATE.REJECTED_RAGE;
+            currentState = AI_STATE.RAGE;
+            frustration += 5; evolve();
+        };
+
+        function evolve() {
+            frustration++;
+            currentScale = Math.min(3.5, 1.0 + (frustration * 0.25));
+            baseSpeed = Math.min(14.0, 4.0 + (frustration * 0.5));
+            if(chococatMesh) chococatMesh.scale.set(currentScale, currentScale, currentScale);
+            showDialogue('grow', 'chococat-speak');
+            notify("¡HA EVOLUCIONADO!", "danger");
+        }
+
+        function moveBody(body, target, speed) {
+            const pos = body.position;
+            const dir = new THREE.Vector3(target.x - pos.x, 0, target.z - pos.z).normalize();
+            body.velocity.x = dir.x * speed;
+            body.velocity.z = dir.z * speed;
+        }
+
+        function summonHelloKitty() {
+            if (!kittyMesh || !kittyBody || !gameStarted) return;
+            kittyBody.position.copy(playerBody.position);
+            kittyBody.position.y += 5;
+            kittyBody.velocity.set(0, 0, 0);
+            kittyState = HK_STATE.FAN_CHASE;
+            notify("¡LLAMASTE A HELLO KITTY!", "pink");
+            showDialogue("hk_fan", "kitty-speak");
+        }
+
+        // --- SISTEMA DE INTERACCIONES (COMER / DORMIR) ---
+        function tryEat() {
+            let nearFood = false;
+            foodItems.forEach(f => { if(f.visible && camera.position.distanceTo(f.position) < 3) { nearFood = true; f.visible = false; } });
+            if(nearFood) { isEating = true; eatingTimer = 5.0; showDialogue('eating', 'system-speak'); notify("COMIENDO PIZZA...", "info"); return true; }
+            return false;
+        }
+
+        function trySleep() {
+            if(camera.position.distanceTo(bedMesh.position) < 5 && !bedBroken) {
+                isSleeping = true; notify("DURMIENDO...", "info"); return true;
+            }
+            return false;
+        }
+
+        function tryInteract() {
+            if(!tryEat()) trySleep();
+        }
+
+        // --- UPDATE MOLANG ---
+        function updateMolang(dt, playerPos) {
+            if(!molangMesh) return;
+            const moPos = molangBody.position;
+            const moVec = new THREE.Vector3(moPos.x, moPos.y, moPos.z);
+            molangMesh.position.copy(moVec); molangMesh.position.y -= 0.9;
+
+            const isMoving = moVec.distanceTo(molangTarget) > 1 || molangState === MO_STATE.FOLLOW || molangState === MO_STATE.EATING;
+            if(isMoving) {
+                 molangMesh.position.y += Math.abs(Math.sin(Date.now() * 0.01)) * 0.5;
+                 molangMesh.rotation.y += dt * 3;
+            }
+
+            const distToPlayer = moVec.distanceTo(playerPos);
+            
+            let nearestFood = null;
+            let foodDist = 999;
+            foodItems.forEach(f => {
+                if(f.visible) {
+                    const d = moVec.distanceTo(f.position);
+                    if(d < foodDist) { foodDist = d; nearestFood = f; }
+                }
+            });
+
+            if (foodDist < 15 && molangState !== MO_STATE.EATING) {
+                 molangState = MO_STATE.EATING;
+                 showDialogue('mo_food', 'molang-speak');
+                 notify("MOLANG VIO UNA PIZZA", "info");
+            } else if (distToPlayer < 20 && molangState !== MO_STATE.FOLLOW && molangState !== MO_STATE.EATING) {
+                 molangState = MO_STATE.FOLLOW;
+                 showDialogue('mo_hi', 'molang-speak');
+            }
+
+            switch(molangState) {
+                case MO_STATE.WANDER:
+                    document.getElementById('molang-status').innerText = "🐰 MOLANG: PASEANDO FELIZ";
+                    if(moVec.distanceTo(molangTarget) < 3 || Math.random() < 0.01) {
+                        molangTarget.set((Math.random()-0.5)* (MAP_SIZE - 40), 2, (Math.random()-0.5)* (MAP_SIZE - 40));
+                    }
+                    moveBody(molangBody, molangTarget, 5.0 * difficultySettings.speedMultiplier);
+                    break;
+                case MO_STATE.FOLLOW:
+                    document.getElementById('molang-status').innerText = "🐰 MOLANG: ¡QUIERE ABRAZOS!";
+                    moveBody(molangBody, playerPos, 6.5);
+                    if(distToPlayer < 3) {
+                         if(Math.random() < 0.02) showDialogue('mo_hug', 'molang-speak');
+                    }
+                    if(distToPlayer > 30) molangState = MO_STATE.WANDER;
+                    break;
+                case MO_STATE.EATING:
+                    document.getElementById('molang-status').innerText = "🐰 MOLANG: COMIENDO PIZZA";
+                    if(nearestFood && nearestFood.visible) {
+                        moveBody(molangBody, nearestFood.position, 8.0);
+                        if(foodDist < 2) {
+                             nearestFood.visible = false; 
+                             molangState = MO_STATE.WANDER;
+                        }
+                    } else {
+                        molangState = MO_STATE.WANDER;
+                    }
+                    break;
+            }
+        }
+
+        // --- UPDATE HELLO KITTY ---
+        function updateHelloKitty(dt, playerPos, kuromiPos, melodyPos) {
+            if(!kittyMesh) return;
+            const kPos = kittyBody.position;
+            const kVec = new THREE.Vector3(kPos.x, kPos.y, kPos.z);
+            kittyMesh.position.copy(kVec); kittyMesh.position.y -= 1;
+
+            const distToPlayer = kVec.distanceTo(playerPos);
+            const distToKuromi = kVec.distanceTo(kuromiPos);
+            const distToMelody = kVec.distanceTo(melodyPos);
+
+            let lookTarget = kittyTarget;
+            if(kittyState === HK_STATE.FAN_CHASE) lookTarget = playerPos;
+            if(kittyState === HK_STATE.PROTECT_MELODY) lookTarget = kuromiPos;
+            if(lookTarget && kVec.distanceTo(lookTarget) > 0.5) kittyMesh.lookAt(lookTarget.x, kittyMesh.position.y, lookTarget.z);
+            
+            animateModel(kittyMesh, true, dt, 1.0);
+            
+            if(kuromiState === K_STATE.CHASE_MELODY && distToKuromi < 40) {
+                kittyState = HK_STATE.PROTECT_MELODY;
+            } else if (kittyState === HK_STATE.PROTECT_MELODY && kuromiState !== K_STATE.CHASE_MELODY) {
+                kittyState = HK_STATE.WANDER; 
+            }
+
+            if(kittyState !== HK_STATE.PROTECT_MELODY) {
+                if(distToPlayer < 30) {
+                    if(kittyState !== HK_STATE.FAN_CHASE) showDialogue("hk_fan", "kitty-speak");
+                    kittyState = HK_STATE.FAN_CHASE;
+                } else if(kittyState === HK_STATE.FAN_CHASE && distToPlayer > 40) {
+                    kittyState = HK_STATE.FIERCE_SEARCH;
+                    showDialogue("hk_lost", "kitty-speak");
+                    notify("KITTY TE PERDIÓ - ¡TE BUSCA FEROZMENTE!", "pink");
+                }
+            }
+
+            switch(kittyState) {
+                case HK_STATE.WANDER:
+                    if(kVec.distanceTo(kittyTarget) < 3 || Math.random() < 0.005) {
+                        kittyTarget.set((Math.random()-0.5)* (MAP_SIZE - 40), 2, (Math.random()-0.5)* (MAP_SIZE - 40));
+                    }
+                    moveBody(kittyBody, kittyTarget, 5.0);
+                    break;
+                
+                case HK_STATE.FAN_CHASE:
+                    if(distToPlayer > 2.5) {
+                        moveBody(kittyBody, playerPos, 6.5);
+                    } else {
+                        moveBody(kittyBody, kVec, 0); 
+                        if(Math.random() < 0.01) showDialogue("hk_hug", "kitty-speak");
+                    }
+                    break;
+
+                case HK_STATE.FIERCE_SEARCH:
+                    moveBody(kittyBody, playerPos, 9.0);
+                    if(distToPlayer < 10) kittyState = HK_STATE.FAN_CHASE;
+                    break;
+
+                case HK_STATE.PROTECT_MELODY:
+                    showDialogue("hk_angry_k", "kitty-speak");
+                    moveBody(kittyBody, kuromiPos, 10.0);
+                    if(distToKuromi < 3.0) {
+                        kuromiState = K_STATE.FLEE; 
+                        showDialogue("k_punished", "kuromi-speak");
+                        notify("KITTY REGAÑÓ A KUROMI", "success");
+                        kittyState = HK_STATE.WANDER; 
+                    }
+                    break;
+            }
+        }
+
+        // --- UPDATE MY MELODY ---
+        function updateMyMelody(dt, playerPos, kuromiPos) {
+            if(!melodyMesh) return;
+            const mPos = melodyBody.position;
+            const mVec = new THREE.Vector3(mPos.x, mPos.y, mPos.z);
+            melodyMesh.position.copy(mVec); melodyMesh.position.y -= 1;
+            
+            let lookTarget = null;
+            if(melodyState === M_STATE.FOLLOW || melodyState === M_STATE.PERSISTENT_FOLLOW) { lookTarget = playerPos; animateModel(melodyMesh, true, dt, 1.5); } 
+            else if (melodyState === M_STATE.FLEE_KUROMI) { const away = mVec.clone().sub(kuromiPos).add(mVec); lookTarget = away; animateModel(melodyMesh, true, dt, 3.0); } 
+            else { lookTarget = melodyTarget; animateModel(melodyMesh, mVec.distanceTo(melodyTarget) > 1, dt, 1.0); }
+
+            if(lookTarget && mVec.distanceTo(lookTarget) > 0.5) melodyMesh.lookAt(lookTarget.x, melodyMesh.position.y, lookTarget.z);
+
+            const distToPlayer = mVec.distanceTo(playerPos);
+            const distToKuromi = mVec.distanceTo(kuromiPos);
+
+            // DETECCIÓN VISUAL HACIA MELODY
+            const camDirM = new THREE.Vector3(); camera.getWorldDirection(camDirM);
+            const toMelody = new THREE.Vector3().subVectors(mVec, playerPos).normalize();
+            const dotM = camDirM.dot(toMelody);
+
+            raycaster.set(playerPos, toMelody);
+            const intersectsM = raycaster.intersectObjects([...walls]);
+            let canSeeMelody = (distToPlayer < difficultySettings.detectionRadius && (intersectsM.length === 0 || intersectsM[0].distance > distToPlayer));
+
+            if (dotM > 0.96 && canSeeMelody && melodyState !== M_STATE.FLEE_KUROMI) {
+                mGazeTime += dt;
+                if (mGazeTime > 2.0 && melodyState !== M_STATE.PERSISTENT_FOLLOW) {
+                    melodyState = M_STATE.PERSISTENT_FOLLOW;
+                    mIgnoreTimer = 0;
+                    showDialogue('m_paws_notice', 'melody-speak');
+                    notify("MELODY QUIERE ENSEÑARTE SUS PATITAS", "pink");
+                }
+            } else {
+                mGazeTime = Math.max(0, mGazeTime - dt);
+            }
+
+            if(distToKuromi < 20 && melodyState !== M_STATE.FLEE_KUROMI) {
+                melodyState = M_STATE.FLEE_KUROMI; showDialogue("m_scared", "melody-speak"); notify("MELODY HUYE DE KUROMI", "pink");
+            } else if (distToPlayer < 15 && melodyState !== M_STATE.FOLLOW && melodyState !== M_STATE.FLEE_KUROMI && melodyState !== M_STATE.PERSISTENT_FOLLOW) {
+                melodyState = M_STATE.FOLLOW; showDialogue("m_hi", "melody-speak");
+            }
+
+            switch(melodyState) {
+                case M_STATE.WANDER:
+                    document.getElementById('melody-status').innerText = "🌸 MY MELODY: PASEANDO";
+                    if(mVec.distanceTo(melodyTarget) < 3 || Math.random() < 0.005) {
+                        melodyTarget.set((Math.random()-0.5)* (MAP_SIZE - 40), 2, (Math.random()-0.5)* (MAP_SIZE - 40));
+                        if(Math.random() < 0.3) showDialogue("m_humming", "melody-speak");
+                    }
+                    moveBody(melodyBody, melodyTarget, 4.0 * difficultySettings.speedMultiplier);
+                    break;
+                case M_STATE.FOLLOW:
+                    document.getElementById('melody-status').innerText = "🌸 MY MELODY: TE ACOMPAÑA";
+                    if(distToPlayer > 5) moveBody(melodyBody, playerPos, 5.5); else moveBody(melodyBody, mVec, 0); 
+                    if(Math.random() < 0.002) showDialogue("m_follow", "melody-speak");
+                    if(distToPlayer > 30) melodyState = M_STATE.WANDER;
+                    break;
+                case M_STATE.PERSISTENT_FOLLOW:
+                    let mSpeed = 6.0;
+                    if (dotM > 0.8 && canSeeMelody) {
+                        // El jugador volteó a verla
+                        if (mIgnoreTimer > 5.0) {
+                            showDialogue('m_paws_happy', 'melody-speak');
+                            mIgnoreTimer = 0; // Se contenta
+                        }
+                        mIgnoreTimer = Math.max(0, mIgnoreTimer - dt * 2);
+                        document.getElementById('melody-status').innerText = "🌸 MY MELODY: ¡FELIZ DE QUE LA MIRES!";
+                    } else {
+                        // El jugador la está ignorando
+                        mIgnoreTimer += dt;
+                        
+                        if (mIgnoreTimer > 5 && mIgnoreTimer < 5.1) { showDialogue('m_paws_ignore_1', 'melody-speak'); notify("MELODY SE ESTÁ IMPACIENTANDO", "pink"); }
+                        if (mIgnoreTimer > 10 && mIgnoreTimer < 10.1) showDialogue('m_paws_ignore_2', 'melody-speak');
+                        if (mIgnoreTimer > 15) {
+                            if (Math.random() < 0.01) showDialogue('m_paws_ignore_3', 'melody-speak');
+                            mSpeed = 9.5; // Corre más rápido tras de ti
+                            document.getElementById('melody-status').innerText = "🌸 MY MELODY: ¡TE ESTÁ ROGANDO ATENCIÓN!";
+                        } else {
+                            document.getElementById('melody-status').innerText = "🌸 MY MELODY: TE EXIGE ATENCIÓN";
+                        }
+                    }
+                    
+                    if(distToPlayer > 4) moveBody(melodyBody, playerPos, mSpeed); else moveBody(melodyBody, mVec, 0);
+                    break;
+                case M_STATE.FLEE_KUROMI:
+                    document.getElementById('melody-status').innerText = "🌸 MY MELODY: HUYENDO";
+                    const fleeDir = new THREE.Vector3().subVectors(mVec, kuromiPos).normalize().multiplyScalar(10);
+                    const fleeTarget = mVec.clone().add(fleeDir);
+                    moveBody(melodyBody, fleeTarget, 8.0);
+                    if(distToKuromi > 30) melodyState = M_STATE.WANDER;
+                    break;
+            }
+        }
+
+        // --- UPDATE KUROMI ---
+        function updateKuromi(dt, playerPos, melodyPos) {
+            if(!kuromiMesh) return;
+            const kPos = kuromiBody.position;
+            const kVec = new THREE.Vector3(kPos.x, kPos.y, kPos.z);
+            kuromiMesh.position.copy(kVec); kuromiMesh.position.y -= 1;
+            
+            const isMoving = kVec.distanceTo(kuromiTarget) > 1 || kuromiState === K_STATE.INTERROGATE || kuromiState === K_STATE.FLEE || kuromiState === K_STATE.REJECTED_RAGE;
+            animateModel(kuromiMesh, isMoving, dt, 1.2);
+
+            const dist = kVec.distanceTo(playerPos);
+            const distMelody = kVec.distanceTo(melodyPos);
+            
+            const camDirK = new THREE.Vector3(); camera.getWorldDirection(camDirK);
+            const toKuromi = new THREE.Vector3().subVectors(kVec, playerPos).normalize();
+            const dotK = camDirK.dot(toKuromi);
+            
+            raycaster.set(playerPos, toKuromi);
+            const intersectsK = raycaster.intersectObjects([...walls]);
+            let canSeeKuromi = (dist < difficultySettings.detectionRadius && (intersectsK.length === 0 || intersectsK[0].distance > dist));
+
+            // EVENTO VIDEOCLIP MUSICAL
+            if (!musicVideoOffered && dist < 25 && kuromiState === K_STATE.PATROL && gameStarted) {
+                musicVideoOffered = true;
+                musicVideoPromptActive = true;
+                kuromiState = K_STATE.MUSIC_PROMPT;
+                
+                // Traemos a Chococat al lado de Kuromi
+                currentState = AI_STATE.WAITING_VIDEO_RESPONSE;
+                chococatBody.position.set(kVec.x + 3, kVec.y, kVec.z + 3);
+                chococatBody.velocity.set(0,0,0);
+                kuromiBody.velocity.set(0,0,0);
+                
+                document.getElementById('video-prompt').style.display = 'block';
+                showDialogue('mv_offer', 'kuromi-speak');
+            }
+
+            if (dotK > 0.96 && canSeeKuromi && kuromiState !== K_STATE.LOVE_CHASE && kuromiState !== K_STATE.FLEE && kuromiState !== K_STATE.MUSIC_PROMPT && kuromiState !== K_STATE.REJECTED_RAGE) {
+                kGazeTime += dt;
+                if (kGazeTime > LOVE_THRESHOLD && !isKuromiLoveMode) {
+                    isKuromiLoveMode = true;
+                    kuromiState = K_STATE.LOVE_CHASE;
+                    showDialogue('k_love_start', 'kuromi-love-speak');
+                    notify("KUROMI MODO TSUNDERE", "pink");
+                    document.getElementById('kuromi-status').innerText = "😈 KUROMI: TSUNDERE ❤️";
+                    document.getElementById('kuromi-status').style.color = "#ff1493";
+                }
+            } else {
+                kGazeTime = Math.max(0, kGazeTime - dt);
+            }
+
+            let kLookTarget = null;
+            if(kuromiState === K_STATE.INTERROGATE || kuromiState === K_STATE.FLEE || kuromiState === K_STATE.LOVE_CHASE || kuromiState === K_STATE.MUSIC_PROMPT || kuromiState === K_STATE.REJECTED_RAGE) kLookTarget = playerPos;
+            else if(kuromiState === K_STATE.CHASE_MELODY) kLookTarget = melodyPos;
+            else kLookTarget = kuromiTarget; 
+
+            if(kLookTarget && kVec.distanceTo(kLookTarget) > 0.5) kuromiMesh.lookAt(kLookTarget.x, kuromiMesh.position.y, kLookTarget.z);
+            
+            if(distMelody < 15 && kuromiState !== K_STATE.CHASE_MELODY && kuromiState !== K_STATE.FLEE && kuromiState !== K_STATE.LOVE_CHASE && kuromiState !== K_STATE.MUSIC_PROMPT && kuromiState !== K_STATE.REJECTED_RAGE) {
+                kuromiState = K_STATE.CHASE_MELODY; showDialogue("k_shoo", "kuromi-speak");
+            }
+
+            switch(kuromiState) {
+                case K_STATE.PATROL:
+                    if(kVec.distanceTo(kuromiTarget) < 3 || Math.random() < 0.01) kuromiTarget.set((Math.random()-0.5)* (MAP_SIZE - 40), 2, (Math.random()-0.5)* (MAP_SIZE - 40));
+                    moveBody(kuromiBody, kuromiTarget, 6.0 * difficultySettings.speedMultiplier);
+                    if(dist < (difficultySettings.detectionRadius / 2) && !musicVideoPromptActive) {
+                         kuromiState = K_STATE.INTERROGATE; showDialogue("k_intro", "kuromi-speak"); notify("KUROMI TE QUIERE PREGUNTAR ALGO", "purple");
+                    }
+                    break;
+                case K_STATE.MUSIC_PROMPT:
+                    moveBody(kuromiBody, kVec, 0); // Se queda quieta esperando
+                    document.getElementById('kuromi-status').innerText = "😈 KUROMI: ESPERANDO RESPUESTA...";
+                    if (dist > 40) {
+                        // El jugador huyó sin responder = Rechazo
+                        window.triggerVideoReject();
+                    }
+                    break;
+                case K_STATE.REJECTED_RAGE:
+                    document.getElementById('kuromi-status').innerText = "😈 KUROMI: ¡¡¡FURIA ABSOLUTA!!!";
+                    document.getElementById('kuromi-status').style.color = "red";
+                    moveBody(kuromiBody, playerPos, 15.0); // Persigue rápido
+                    if (dist < 3) triggerJumpscare("¡KUROMI TE CANCELÓ POR IGNORAR SU VIDEO!");
+                    break;
+                case K_STATE.INTERROGATE:
+                    const pVel = new THREE.Vector3(playerBody.velocity.x, 0, playerBody.velocity.z);
+                    const speed = 7.5 * difficultySettings.speedMultiplier;
+                    const timeToTarget = dist / speed;
+                    const pred = playerPos.clone().add(pVel.multiplyScalar(Math.min(timeToTarget, 2.0)));
+                    
+                    moveBody(kuromiBody, pred, speed);
+
+                    if(dist < 4) {
+                        moveBody(kuromiBody, kVec, 0); 
+                        if(Math.random() < 0.02) showDialogue(Math.random()>0.5 ? "k_question_1" : "k_question_2", "kuromi-speak");
+                        kuromiTimer += dt;
+                        if(kuromiTimer > 5.0) { kuromiTimer = 0; kuromiState = K_STATE.FLEE; showDialogue("k_mess", "kuromi-speak"); }
+                    }
+                    break;
+                case K_STATE.CHASE_MELODY:
+                     moveBody(kuromiBody, melodyPos, 7.0);
+                     if(distMelody < 4) { showDialogue("k_chase_melody", "kuromi-speak"); if(Math.random() < 0.05) kuromiState = K_STATE.PATROL; }
+                     if(distMelody > 25) kuromiState = K_STATE.PATROL;
+                     break;
+                case K_STATE.FLEE:
+                    const fleeDir = new THREE.Vector3().subVectors(kVec, playerPos).normalize().multiplyScalar(20);
+                    const fleeTarget = kVec.clone().add(fleeDir);
+                    moveBody(kuromiBody, fleeTarget, 9.0);
+                    kuromiTimer += dt;
+                    if(kuromiTimer > 4.0) { kuromiTimer = 0; kuromiState = K_STATE.PATROL; }
+                    break;
+                case K_STATE.LOVE_CHASE:
+                    const pvK = new THREE.Vector3(playerBody.velocity.x, 0, playerBody.velocity.z);
+                    if(pvK.length() > 2.0) {
+                         const pred = playerPos.clone().add(pvK.normalize().multiplyScalar(pvK.length() * 1.5)); 
+                         kuromiTarget.lerp(pred, 0.9);
+                    } else { kuromiTarget.copy(playerPos); }
+                    moveBody(kuromiBody, kuromiTarget, 8.0 * difficultySettings.speedMultiplier);
+                    
+                    if (Math.random() < 0.005) showDialogue('k_love_chase', 'kuromi-love-speak');
+
+                    if(dist < 2.5) {
+                         showDialogue('k_love_catch', 'kuromi-love-speak');
+                         triggerJumpscare("¡KUROMI TE ATRAPÓ CON SU AMOR!");
+                    }
+                    
+                    if(!canSeeKuromi && dist > 35) {
+                         isKuromiLoveMode = false;
+                         kuromiState = K_STATE.PATROL;
+                         document.getElementById('kuromi-status').innerText = "😈 KUROMI: PATRULLANDO";
+                         document.getElementById('kuromi-status').style.color = "#a020f0";
+                         notify("KUROMI SE CALMÓ", "purple");
+                    }
+                    break;
+            }
+        }
+
+        function triggerAbduction() {
+            if(isAbducted || difficultySettings.debug) return;
+            isAbducted = true;
+            currentState = AI_STATE.ABDUCTING;
+            showDialogue('escape_catch', 'abduct-speak'); notify("¡TE HA ATRAPADO ESCAPANDO!", "danger");
+            const overlay = document.getElementById('abduct-overlay'); overlay.style.display = 'flex';
+            overlay.innerHTML = "<h1 style='color:purple'>¡NO TE VAYAS!</h1>";
+            setTimeout(() => { overlay.style.opacity = 1; }, 100);
+            setTimeout(() => {
+                playerBody.position.set(0, 2, 0); playerBody.velocity.set(0,0,0);
+                chococatBody.position.set(0, 2, 10); 
+                currentState = AI_STATE.SURVEILLANCE; surveillanceTimer = 10.0; 
+                showDialogue('return_home', 'chococat-speak'); notify("MODO VIGILANCIA ACTIVO", "warning");
+                overlay.style.opacity = 0; setTimeout(() => { overlay.style.display = 'none'; isAbducted = false; }, 2000);
+            }, 4000);
+        }
+
+        function triggerTrapEnding() {
+            if(difficultySettings.debug) return;
+            if(!isMobile) controls.unlock();
+            const overlay = document.getElementById('abduct-overlay'); overlay.style.display = 'flex';
+            overlay.style.opacity = 1; overlay.style.background = "black"; overlay.innerHTML = "";
+            setTimeout(() => {
+                playerBody.position.set(1000, 2, 1000); playerBody.velocity.set(0,0,0);
+                chococatBody.position.set(1000, 2, 1003); chococatMesh.scale.set(2,2,2);
+                camera.position.set(1000, 2, 1000); camera.lookAt(1000, 2, 1010);
+                overlay.style.opacity = 0; 
+                showDialogue('trap_ending', 'final-speak');
+                setTimeout(() => { document.getElementById('jumpscare').style.display = 'flex'; document.getElementById('jumpscare-text').innerText = "¡NO HAY ESCAPATORIA!"; }, 3000);
+            }, 1000);
+        }
+
+        function triggerWin() {
+            if(difficultySettings.debug) return;
+            document.getElementById('win-screen').style.display = 'flex'; 
+            if(!isMobile) controls.unlock(); 
+            chococatBody.velocity.set(0,0,0);
+        }
+        function triggerJumpscare(text = "¡TE ATRAPÓ!") {
+            if(difficultySettings.debug) return;
+            document.getElementById('jumpscare-text').innerText = text;
+            document.getElementById('jumpscare').style.display = 'flex'; 
+            if(!isMobile) controls.unlock(); 
+            chococatBody.velocity.set(0,0,0);
+        }
+
+        function checkVisualContact(dt, catPos, playerPos, canSee) {
+            if(!chococatMesh || currentState === AI_STATE.STUNNED || currentState === AI_STATE.RAGE || currentState === AI_STATE.ABDUCTING || currentState === AI_STATE.SLEEPING || currentState === AI_STATE.BED_SHOCK || currentState === AI_STATE.WAITING_VIDEO_RESPONSE) return;
+            
+            const camDir = new THREE.Vector3(); camera.getWorldDirection(camDir);
+            const toCat = new THREE.Vector3().subVectors(catPos, playerPos).normalize();
+            const dot = camDir.dot(toCat);
+            
+            if(dot > 0.96 && canSee) {
+                gazeTime += dt; loneliness = Math.max(0, loneliness - dt * 5 * difficultySettings.lonelinessRate); 
+                if(gazeTime > 1.5 && !flags.loveWarn) { notify("¡DEJA DE MIRARLO! (Obsesión)", "warning"); flags.loveWarn = true; }
+                if(gazeTime > LOVE_THRESHOLD && !isLoveMode) {
+                    isLoveMode = true; currentState = AI_STATE.LOVE_CHASE;
+                    showDialogue('love_start', 'love-speak'); document.getElementById('love-overlay').style.display = 'block';
+                    notify("MODO AMOR ACTIVADO - CORRE", "danger");
+                }
+            } else {
+                gazeTime = Math.max(0, gazeTime - dt); if(gazeTime < 1) flags.loveWarn = false;
+            }
+
+            if (dot < 0.5 && currentState !== AI_STATE.LOVE_CHASE && currentState !== AI_STATE.RAGE && currentState !== AI_STATE.SURVEILLANCE) {
+                loneliness += dt * difficultySettings.lonelinessRate;
+                if(loneliness > 5) document.getElementById('ignore-vignette').style.display = 'block'; else document.getElementById('ignore-vignette').style.display = 'none';
+
+                if(loneliness > 10 && !flags.lonelinessLow) { notify("SOLEDAD AUMENTANDO - MÍRALO", "warning"); flags.lonelinessLow = true; }
+                if(loneliness > 15 && loneliness < 15.1) showDialogue('ignore_1', 'sad-speak');
+                if(loneliness > 25 && !flags.lonelinessHigh) { notify("¡PELIGRO! SOLEDAD CRÍTICA", "danger"); flags.lonelinessHigh = true; }
+                if(loneliness > 25 && loneliness < 25.1) { showDialogue('ignore_2', 'rage-speak'); evolve(); }
+                if(loneliness > 35) {
+                    showDialogue('ignore_punish', 'rage-speak'); currentState = AI_STATE.RAGE;
+                    notify("¡TE HA ALCANZADO LA CULPA!", "danger");
+                    const behindDir = camDir.clone().negate().multiplyScalar(5);
+                    const spawnPos = playerPos.clone().add(behindDir);
+                    chococatBody.position.set(spawnPos.x, 2, spawnPos.z); loneliness = 0;
+                    document.getElementById('ignore-vignette').style.display = 'none';
+                }
+            } 
+        }
+
+        // --- UPDATE AI (EL CEREBRO) ---
+        function updateAI(dt, timeAlive) {
+            if(!chococatMesh || !gameStarted) return; if(isAbducted) return;
+
+            const graceEl = document.getElementById('grace-period');
+            if (timeAlive < 5) { graceEl.style.display = 'block'; return; } else { graceEl.style.display = 'none'; }
+
+            const catPosThree = new THREE.Vector3(chococatBody.position.x, chococatBody.position.y, chococatBody.position.z);
+            const playerPos = camera.position.clone();
+            const distToPlayer = catPosThree.distanceTo(playerPos);
+
+            if(difficultySettings.debug) {
+                visionLine.visible = true;
+                targetLine.visible = true;
+                const positions = visionLine.geometry.attributes.position.array;
+                positions[0] = catPosThree.x; positions[1] = catPosThree.y; positions[2] = catPosThree.z;
+                positions[3] = playerPos.x; positions[4] = playerPos.y; positions[5] = playerPos.z;
+                visionLine.geometry.attributes.position.needsUpdate = true;
+                
+                const tPos = targetLine.geometry.attributes.position.array;
+                tPos[0] = catPosThree.x; tPos[1] = catPosThree.y; tPos[2] = catPosThree.z;
+                tPos[3] = targetPosition.x; tPos[4] = targetPosition.y; tPos[5] = targetPosition.z;
+                targetLine.geometry.attributes.position.needsUpdate = true;
+            } else {
+                visionLine.visible = false; targetLine.visible = false;
+            }
+
+            const melodyPos = melodyBody ? new THREE.Vector3(melodyBody.position.x, melodyBody.position.y, melodyBody.position.z) : new THREE.Vector3(0, -100, 0);
+            const kuromiPos = kuromiBody ? new THREE.Vector3(kuromiBody.position.x, kuromiBody.position.y, kuromiBody.position.z) : new THREE.Vector3(0, -100, 0);
+            
+            updateMolang(dt, playerPos);
+            updateKuromi(dt, playerPos, melodyPos);
+            updateMyMelody(dt, playerPos, kuromiPos);
+            updateHelloKitty(dt, playerPos, kuromiPos, melodyPos); 
+
+            chococatMesh.position.copy(catPosThree); chococatMesh.position.y = chococatBody.position.y - 1;
+            
+            const isChocoMoving = currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE;
+            if (isChocoMoving) animateModel(chococatMesh, true, dt, currentScale); 
+
+            if(currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE) {
+                if(currentState === AI_STATE.SEARCH || currentState === AI_STATE.SUSPICION || currentState === AI_STATE.INVESTIGATE_LAST_SEEN) {
+                     chococatMesh.lookAt(targetPosition.x, chococatMesh.position.y, targetPosition.z);
+                } else {
+                     chococatMesh.lookAt(playerPos.x, chococatMesh.position.y, playerPos.z);
+                }
+            }
+
+            if(keysCollected === totalKeys && distToPlayer < 3 && currentState !== AI_STATE.RAGE && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE) {
+                keysCollected = 0; respawnKeys();
+                notify("¡TE ROBÓ LAS LLAVES!", "danger"); showDialogue("keys_stolen", "chococat-speak");
+                document.getElementById('objective').innerText = `LLAVES: 0/${totalKeys} 🗝️`; doorLight.color.setHex(0xff0000); 
+            }
+
+            raycaster.set(catPosThree, playerPos.clone().sub(catPosThree).normalize());
+            const intersects = raycaster.intersectObjects([...walls]);
+            const detectionRange = difficultySettings.detectionRadius * currentScale;
+            let canSee = (distToPlayer < detectionRange && (intersects.length === 0 || intersects[0].distance > distToPlayer));
+            if(invisibleMode) canSee = false; 
+
+            if(difficultySettings.hearFootsteps && keys.shift && distToPlayer < 60 && !isSleeping) {
+                if(currentState === AI_STATE.SEARCH || currentState === AI_STATE.SUSPICION) {
+                    currentState = AI_STATE.SUSPICION;
+                    targetPosition.copy(playerPos);
+                    if(!flags.noiseWarn) { notify("¡TE ESCUCHÓ CORRER!", "danger"); flags.noiseWarn = true; }
+                }
+            } else {
+                if(!keys.shift) flags.noiseWarn = false;
+            }
+
+            const stealthInd = document.getElementById('stealth-indicator');
+            if(canSee) {
+                stealthInd.innerText = "👁️ ¡VISIBLE!"; stealthInd.style.color = "red";
+                lostSightTimer = 0;
+            } else {
+                stealthInd.innerText = "👻 OCULTO"; stealthInd.style.color = "lime";
+            }
+
+            if(isSleeping && canSee && currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.RAGE && currentState !== AI_STATE.BED_SHOCK) {
+                currentState = AI_STATE.SLEEPING; notify("SE VA A DORMIR CONTIGO...", "info"); showDialogue("sleep_join", "love-speak");
+            }
+
+            const distToDoor = playerPos.z > (EXIT_Z - 20); 
+            if(distToDoor) {
+                if(!flags.escapeWarn) { notify("ESTÁS CERCA DE LA SALIDA...", "info"); flags.escapeWarn = true; }
+                let canSeeDoor = (distToPlayer < 60 && (intersects.length === 0 || intersects[0].distance > distToPlayer));
+                if(canSeeDoor && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.RAGE && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE) { triggerAbduction(); return; }
+            } else { flags.escapeWarn = false; }
+
+            if(playerPos.z < FORBIDDEN_Z + 15 && playerPos.z > FORBIDDEN_Z && !flags.zoneWarn) { notify("ADVERTENCIA: ZONA PROHIBIDA CERCA", "warning"); flags.zoneWarn = true; } 
+            else if (playerPos.z > FORBIDDEN_Z + 20) flags.zoneWarn = false;
+
+            if (playerPos.z < FORBIDDEN_Z && currentState !== AI_STATE.RAGE) {
+                currentState = AI_STATE.RAGE; showDialogue('forbidden_enter', 'rage-speak'); chococatBody.position.set(playerPos.x, 2, playerPos.z + 20); 
+            }
+
+            checkVisualContact(dt, catPosThree, playerPos, canSee);
+            
+            if(isEating && canSee && currentState !== AI_STATE.RAGE && currentState !== AI_STATE.LOVE_CHASE && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.BEGGING_FOOD && currentState !== AI_STATE.SURVEILLANCE && currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE) {
+                currentState = AI_STATE.BEGGING_FOOD; begTimer = 0; showDialogue('food_beg_1', 'chococat-speak'); notify("¡QUIERE TU COMIDA!", "warning");
+            }
+
+            let currentSpeed = baseSpeed * difficultySettings.speedMultiplier + (loneliness * 0.5);
+            const statusEl = document.getElementById('status');
+
+            switch(currentState) {
+                case AI_STATE.SEARCH:
+                    statusEl.innerText = "ESTADO: BUSCANDO ATENCIÓN"; statusEl.style.color = "lime";
+                    if(catPosThree.distanceTo(targetPosition) < 3) targetPosition.set((Math.random()-0.5)* (MAP_SIZE - 20), 1, (Math.random()-0.5)* (MAP_SIZE - 20));
+                    moveBody(chococatBody, targetPosition, currentSpeed);
+                    if(canSee) { currentState = AI_STATE.CHASE; showDialogue('found', 'chococat-speak'); notify("DETECTADO", "danger"); }
+                    break;
+                case AI_STATE.CHASE:
+                    statusEl.innerText = "ESTADO: PERSECUCIÓN"; statusEl.style.color = "red";
+                    
+                    if(canSee) {
+                        const playerVel = new THREE.Vector3(playerBody.velocity.x, 0, playerBody.velocity.z); const pSpeed = playerVel.length();
+                        if(pSpeed > 2.0 && distToPlayer < 40) {
+                            const lookAhead = Math.min(2.5, distToPlayer / currentSpeed); 
+                            const predictedPos = playerPos.clone().add(playerVel.normalize().multiplyScalar(pSpeed * lookAhead));
+                            targetPosition.lerp(predictedPos, 0.7); 
+                        } else { targetPosition.copy(playerPos); }
+                        lastKnownPosition.copy(playerPos);
+                        lostSightTimer = 0;
+                    } else {
+                        lostSightTimer += dt;
+                        targetPosition.copy(lastKnownPosition);
+                        if(lostSightTimer > difficultySettings.aggroPersistence) {
+                             currentState = AI_STATE.INVESTIGATE_LAST_SEEN;
+                             showDialogue('lost_player', 'chococat-speak');
+                             notify("TE HA PERDIDO DE VISTA", "success");
+                        }
+                    }
+
+                    moveBody(chococatBody, targetPosition, currentSpeed * 1.5);
+                    if(distToPlayer < (1.5 * currentScale)) triggerJumpscare("¡CHOCOCAT TE ATRAPÓ!");
+                    break;
+                case AI_STATE.LOVE_CHASE:
+                    statusEl.innerText = "ESTADO: OBSESIÓN ❤️"; statusEl.style.color = "#ff00ff";
+                    const pv = new THREE.Vector3(playerBody.velocity.x, 0, playerBody.velocity.z);
+                    if(pv.length() > 2.0) {
+                         const pred = playerPos.clone().add(pv.normalize().multiplyScalar(pv.length() * 2.0)); targetPosition.lerp(pred, 0.9);
+                    } else { targetPosition.copy(playerPos); }
+                    moveBody(chococatBody, targetPosition, baseSpeed * 2.2); 
+                    
+                    if (Math.random() < 0.005) showDialogue(Math.random() > 0.5 ? 'love_chase_1' : 'love_chase_2', 'love-speak');
+                    
+                    if(distToPlayer < (1.5 * currentScale)) triggerJumpscare("¡EL AMOR DE CHOCOCAT TE ATRAPÓ!");
+                    if(!canSee) { currentState = AI_STATE.INVESTIGATE_LAST_SEEN; baseSpeed *= 1.5; }
+                    break;
+                case AI_STATE.BEGGING_FOOD:
+                    statusEl.innerText = "ESTADO: GULA"; statusEl.style.color = "cyan";
+                    begTimer += dt;
+                    if(distToPlayer > 6) moveBody(chococatBody, playerPos, baseSpeed * 2.0); else moveBody(chococatBody, catPosThree, 0);
+                    if(begTimer > 8) { showDialogue('food_insistent', 'rage-speak'); currentState = AI_STATE.RAGE; }
+                    if(!isEating) currentState = AI_STATE.CHASE; 
+                    break;
+                case AI_STATE.WAITING_VIDEO_RESPONSE:
+                    statusEl.innerText = "ESTADO: ESPERANDO TU OPINIÓN"; statusEl.style.color = "pink";
+                    moveBody(chococatBody, catPosThree, 0);
+                    chococatMesh.lookAt(playerPos.x, chococatMesh.position.y, playerPos.z);
+                    break;
+                case AI_STATE.RAGE:
+                    statusEl.innerText = "ESTADO: !!! FURIA !!!"; statusEl.style.color = "#880000";
+                    document.getElementById('rage-overlay').style.display = 'block'; chococatMesh.scale.set(5,5,5); 
+                    targetPosition.copy(playerPos); moveBody(chococatBody, targetPosition, 25.0); 
+                    if(distToPlayer < 4) triggerJumpscare("¡LA FURIA DE CHOCOCAT TE DESTRUYÓ!");
+                    break;
+                case AI_STATE.SURVEILLANCE:
+                    statusEl.innerText = "ESTADO: VIGILANDO..."; statusEl.style.color = "white";
+                    surveillanceTimer -= dt;
+                    if(distToPlayer > 5) moveBody(chococatBody, playerPos, baseSpeed * 0.8); else moveBody(chococatBody, catPosThree, 0);
+                    if(surveillanceTimer <= 0) { currentState = AI_STATE.SEARCH; notify("CHOCOCAT SE ALEJA...", "info"); }
+                    break;
+                case AI_STATE.SLEEPING:
+                    statusEl.innerText = "ESTADO: OBSERVÁNDOTE DESDE LA CAMA 👀"; statusEl.style.color = "#aaa";
+                    if(bedBroken) { currentState = AI_STATE.BED_SHOCK; shockTimer = 5.0; break; }
+                    if(catPosThree.distanceTo(bedMesh.position) > 2) {
+                        moveBody(chococatBody, bedMesh.position, baseSpeed); chococatMesh.lookAt(bedMesh.position);
+                    } else {
+                        moveBody(chococatBody, catPosThree, 0); chococatMesh.position.y = 1.0; 
+                        chococatMesh.lookAt(playerPos.x, 1.0, playerPos.z); chococatMesh.rotateX(-Math.PI / 4);
+                    }
+                    if(!isSleeping && distToPlayer < 10) {
+                        chococatMesh.rotation.z = 0; chococatMesh.rotateX(0);
+                        if(keys.shift) {
+                            notify("TE LEVANTASTE CON SIGILO", "success"); currentState = AI_STATE.STUNNED; stunTimer = 3.0;
+                        } else {
+                            notify("¡LO DESPERTASTE!", "danger"); showDialogue("wake_rage", "rage-speak"); currentState = AI_STATE.RAGE;
+                        }
+                    }
+                    break;
+                case AI_STATE.BED_SHOCK:
+                    statusEl.innerText = "ESTADO: ¡¿MI CAMA?! 💔"; statusEl.style.color = "white";
+                    moveBody(chococatBody, catPosThree, 0); shockTimer -= dt;
+                    chococatMesh.lookAt(bedMesh.position); chococatMesh.rotation.z = 0; 
+                    if(Math.random() < 0.05) showDialogue("noise", "sad-speak"); 
+                    if(shockTimer <= 0) {
+                        notify("¡AHORA SÍ ESTÁS MUERTO!", "danger"); showDialogue("wake_rage", "rage-speak");
+                        currentState = AI_STATE.RAGE; baseSpeed = 18.0; frustration = 10; evolve();
+                    }
+                    break;
+                case AI_STATE.INVESTIGATE_LAST_SEEN:
+                    statusEl.innerText = "ESTADO: RASTREANDO..."; statusEl.style.color = "orange";
+                    moveBody(chococatBody, lastKnownPosition, currentSpeed * 1.2);
+                    if(catPosThree.distanceTo(lastKnownPosition) < 3) { 
+                        if(!canSee) { currentState = AI_STATE.SEARCH; notify("PERDIÓ EL RASTRO", "success"); }
+                        else { currentState = AI_STATE.CHASE; } 
+                    }
+                    if(canSee) currentState = isLoveMode ? AI_STATE.LOVE_CHASE : AI_STATE.CHASE;
+                    break;
+                case AI_STATE.SUSPICION:
+                    statusEl.innerText = "ESTADO: INVESTIGANDO RUIDO"; statusEl.style.color = "yellow";
+                    moveBody(chococatBody, targetPosition, currentSpeed);
+                    if(catPosThree.distanceTo(targetPosition) < 3) currentState = AI_STATE.SEARCH;
+                    if(canSee) currentState = AI_STATE.CHASE;
+                    break;
+                case AI_STATE.STUNNED:
+                    statusEl.innerText = "ESTADO: ATURDIDO / BAILANDO"; statusEl.style.color = "pink";
+                    chococatBody.velocity.set(0,0,0);
+                    stunTimer -= dt;
+                    chococatMesh.rotation.y += 5 * dt; // Gira de alegría o de golpe
+                    if(stunTimer <= 0) {
+                        currentState = AI_STATE.CHASE; document.getElementById('kitty-overlay').style.display = 'none';
+                        kittyMesh.visible = false; chococatMesh.rotation.y = 0; evolve();
+                    }
+                    break;
+            }
+            if(currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK && currentState !== AI_STATE.WAITING_VIDEO_RESPONSE) {
+                const distMoved = catPosThree.distanceTo(lastCatPos); lastCatPos.copy(catPosThree);
+                if (distMoved < 0.05) { 
+                    stuckTimer += dt;
+                    if(stuckTimer > 1.5 && stuckTimer < 2.0) {
+                        chococatBody.velocity.y = 5; 
+                        chococatBody.velocity.x += (Math.random()-0.5)*5; 
+                        chococatBody.velocity.z += (Math.random()-0.5)*5; 
+                    }
+                    if (stuckTimer > 4.0) { 
+                        chococatBody.position.y += 2;
+                        chococatBody.position.x += (Math.random()-0.5)*10;
+                        chococatBody.position.z += (Math.random()-0.5)*10;
+                        stuckTimer=0; 
+                        notify("CHOCOCAT SE DESATASCÓ...", "warning");
+                    }
+                } else { 
+                    stuckTimer = 0; 
+                }
+            }
+            const vol = Math.max(0, 1 - (distToPlayer / 60));
+            if(currentState === AI_STATE.STUNNED) gain.gain.value = 0;
+            else {
+                gain.gain.setTargetAtTime(vol * 0.8, listener.context.currentTime, 0.1);
+                let freq = 60 + (loneliness * 10); 
+                if(currentState === AI_STATE.SURVEILLANCE || currentState === AI_STATE.SLEEPING) freq = 30; 
+                if(currentState === AI_STATE.CHASE) freq = 250;
+                if(currentState === AI_STATE.LOVE_CHASE) freq = 400; 
+                if(currentState === AI_STATE.RAGE) freq = 100; 
+                osc.frequency.setTargetAtTime(freq, listener.context.currentTime, 0.1);
+            }
+        }
+
+        const throwGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+        const throwMat = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+        const throwables = [];
+
+        function spawnThrowable(isPlayerThrown = true) {
+            const mesh = new THREE.Mesh(throwGeo, throwMat); 
+            let spawnPos, dir;
+
+            if(isPlayerThrown) {
+                 dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).normalize();
+                 spawnPos = camera.position.clone().add(dir.clone().multiplyScalar(1.5));
+            } else {
+                spawnPos = new THREE.Vector3((Math.random()-0.5)*20, 20, (Math.random()-0.5)*20).add(camera.position);
+                dir = new THREE.Vector3(0, -1, 0);
+            }
+
+            mesh.position.copy(spawnPos); 
+            scene.add(mesh);
+            const body = new CANNON.Body({ mass: 2, shape: new CANNON.Box(new CANNON.Vec3(0.25, 0.25, 0.25)) });
+            body.position.copy(spawnPos);
+            
+            if(isPlayerThrown) body.velocity.set(dir.x * 30, dir.y * 30, dir.z * 30);
+            else body.velocity.set((Math.random()-0.5)*5, -10, (Math.random()-0.5)*5);
+
+            world.addBody(body);
+            const obj = { mesh, body, time: 0 };
+            throwables.push(obj);
+            if(isPlayerThrown) lastProjectile = obj;
+        }
+
+        // --- CONTROLES Y EVENTOS ---
+        const keys = { w:0, a:0, s:0, d:0, shift:0 };
+
+        // Desktop Events
+        document.addEventListener('mousedown', (e) => {
+            if(!gameStarted || isMobile || e.target.tagName === 'BUTTON' || e.target.closest('.action-btn')) return;
+            if(!controls.isLocked && !projectileCameraMode) { controls.lock(); return; }
+            spawnThrowable(true);
+        });
+
+        window.onkeydown = (e) => {
+            if(!gameStarted) return;
+            
+            if(musicVideoPromptActive) {
+                if(e.code === 'KeyY') { window.triggerVideoAccept(); return; }
+                if(e.code === 'KeyN') { window.triggerVideoReject(); return; }
+            }
+
+            if(e.code === 'KeyW') { keys.w = 1; if(isSleeping) isSleeping = false; }
+            if(e.code === 'KeyA') { keys.a = 1; if(isSleeping) isSleeping = false; }
+            if(e.code === 'KeyS') { keys.s = 1; if(isSleeping) isSleeping = false; }
+            if(e.code === 'KeyD') { keys.d = 1; if(isSleeping) isSleeping = false; }
+            if(e.code === 'ShiftLeft') keys.shift = 1;
+            
+            if(e.code === 'KeyF') { flashLight.intensity = flashLight.intensity > 0 ? 0 : 200; }
+            if(e.code === 'KeyE') summonHelloKitty();
+            if(e.code === 'KeyL') { emergencyOn = !emergencyOn; emergencyOn ? scene.add(emergencyLight) : scene.remove(emergencyLight); }
+            if(e.code === 'KeyO') { currentLang = currentLang === 'es' ? 'en' : 'es'; showDialogue('start'); }
+            if(e.code === 'KeyC') { tryEat(); }
+            if(e.code === 'KeyG') { trySleep(); }
+
+            if(difficultySettings.debug) {
+                if(e.code === 'Digit1') { currentState = AI_STATE.SEARCH; notify("DEBUG: ESTADO BÚSQUEDA", "info"); }
+                if(e.code === 'Digit2') { currentState = AI_STATE.CHASE; notify("DEBUG: ESTADO PERSECUCIÓN", "warning"); }
+                if(e.code === 'Digit3') { currentState = AI_STATE.RAGE; notify("DEBUG: ESTADO FURIA", "danger"); }
+                if(e.code === 'Digit4') { currentState = AI_STATE.SLEEPING; notify("DEBUG: ESTADO DORMIR", "info"); }
+                if(e.code === 'KeyB') { for(let i=0; i<20; i++) setTimeout(() => spawnThrowable(false), i*50); notify("DEBUG: LLUVIA DE CAJAS", "success"); }
+                if(e.code === 'KeyI') { invisibleMode = !invisibleMode; notify(`DEBUG: INVISIBILIDAD ${invisibleMode ? "ON" : "OFF"}`, "purple"); }
+                if(e.code === 'KeyV') { 
+                    projectileCameraMode = !projectileCameraMode; 
+                    notify(`DEBUG: CAMARA PROYECTIL ${projectileCameraMode ? "ON" : "OFF"}`, "info");
+                    if(!projectileCameraMode) { controls.lock(); } else { controls.unlock(); }
+                }
+            }
+        };
+        window.onkeyup = (e) => {
+            if(e.code === 'KeyW') keys.w = 0; if(e.code === 'KeyA') keys.a = 0;
+            if(e.code === 'KeyS') keys.s = 0; if(e.code === 'KeyD') keys.d = 0;
+            if(e.code === 'ShiftLeft') keys.shift = 0;
+        };
+
+        // Mobile Events
+        if (isMobile) {
+            let jBase = document.getElementById('joystick-base');
+            let jStick = document.getElementById('joystick-stick');
+            let jId = null; let jStartX, jStartY;
+            let cId = null; let cLastX, cLastY;
+            let euler = new THREE.Euler(0, 0, 0, 'YXZ');
+
+            document.addEventListener('touchstart', (e) => {
+                if(!gameStarted || isSleeping || isAbducted) return;
+                if(e.target.closest('.action-btn') || e.target.tagName === 'BUTTON') return;
+
+                for(let i=0; i<e.changedTouches.length; i++) {
+                    let t = e.changedTouches[i];
+                    if(t.clientX < window.innerWidth / 2 && jId === null) {
+                        jId = t.identifier;
+                        jStartX = t.clientX; jStartY = t.clientY;
+                        jBase.style.display = 'block';
+                        jBase.style.left = (jStartX - 60) + 'px';
+                        jBase.style.top = (jStartY - 60) + 'px';
+                        jStick.style.transform = 'translate(0px, 0px)';
+                    } else if (t.clientX >= window.innerWidth / 2 && cId === null) {
+                        cId = t.identifier;
+                        cLastX = t.clientX; cLastY = t.clientY;
+                    }
+                }
+            });
+
+            document.addEventListener('touchmove', (e) => {
+                if(!gameStarted || isSleeping || isAbducted) return;
+                for(let i=0; i<e.changedTouches.length; i++) {
+                    let t = e.changedTouches[i];
+                    if(t.identifier === jId) {
+                        let dx = t.clientX - jStartX;
+                        let dy = t.clientY - jStartY;
+                        let dist = Math.sqrt(dx*dx + dy*dy);
+                        if(dist > 50) { dx = (dx/dist)*50; dy = (dy/dist)*50; }
+                        jStick.style.transform = `translate(${dx}px, ${dy}px)`;
+                        
+                        keys.w = dy < -15 ? 1 : 0;
+                        keys.s = dy > 15 ? 1 : 0;
+                        keys.a = dx < -15 ? 1 : 0;
+                        keys.d = dx > 15 ? 1 : 0;
+                    } else if (t.identifier === cId) {
+                        let mx = t.clientX - cLastX;
+                        let my = t.clientY - cLastY;
+                        cLastX = t.clientX; cLastY = t.clientY;
+                        
+                        euler.setFromQuaternion(camera.quaternion);
+                        euler.y -= mx * 0.005;
+                        euler.x -= my * 0.005;
+                        euler.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, euler.x));
+                        camera.quaternion.setFromEuler(euler);
+                    }
+                }
+            });
+
+            const endTouch = (e) => {
+                for(let i=0; i<e.changedTouches.length; i++) {
+                    let t = e.changedTouches[i];
+                    if(t.identifier === jId) {
+                        jId = null; jBase.style.display = 'none';
+                        keys.w = keys.s = keys.a = keys.d = 0;
+                    } else if (t.identifier === cId) {
+                        cId = null;
+                    }
+                }
+            };
+            document.addEventListener('touchend', endTouch);
+            document.addEventListener('touchcancel', endTouch);
+
+            // Botones Virtuales
+            document.getElementById('btn-throw').addEventListener('touchstart', (e) => { e.preventDefault(); spawnThrowable(true); });
+            document.getElementById('btn-interact').addEventListener('touchstart', (e) => { e.preventDefault(); tryInteract(); });
+            document.getElementById('btn-kitty').addEventListener('touchstart', (e) => { e.preventDefault(); summonHelloKitty(); });
+            
+            const btnRun = document.getElementById('btn-run');
+            btnRun.addEventListener('touchstart', (e) => { e.preventDefault(); keys.shift = 1; btnRun.style.background = "rgba(255,255,255,0.6)"; if(isSleeping) isSleeping = false; });
+            btnRun.addEventListener('touchend', (e) => { e.preventDefault(); keys.shift = 0; btnRun.style.background = "rgba(0,0,0,0.4)"; });
+        }
+
+
+        // CORRECCIÓN: Evitamos la fuga de memoria eliminando los proyectiles inactivos del array principal
+        function updateThrowables(dt) {
+            for (let i = throwables.length - 1; i >= 0; i--) {
+                const obj = throwables[i];
+                obj.mesh.position.copy(obj.body.position); 
+                obj.mesh.quaternion.copy(obj.body.quaternion); 
+                obj.time += dt;
+
+                if(obj.mesh.position.y < -10) obj.time = 100;
+
+                if(obj.time < 3.0) {
+                    const distToCat = obj.mesh.position.distanceTo(chococatMesh.position);
+                    const distToBed = obj.mesh.position.distanceTo(bedMesh.position);
+                    const distToKuromi = kuromiMesh ? obj.mesh.position.distanceTo(kuromiMesh.position) : 999;
+                    const distToMelody = melodyMesh ? obj.mesh.position.distanceTo(melodyMesh.position) : 999;
+                    if(!bedBroken && distToBed < 4.0) {
+                        bedBroken = true; scene.remove(bedMesh); scene.remove(pillowMesh);
+                        notify("¡ROMPISTE SU CAMA!", "warning");
+                        currentState = AI_STATE.BED_SHOCK; shockTimer = 5.0; 
+                        obj.time = 100; continue;
+                    }
+                    if(distToKuromi < 2.5) { notify("¡LE PEGASTE A KUROMI!", "purple"); showDialogue("k_mess", "kuromi-speak"); kuromiState = K_STATE.FLEE; obj.time = 100; }
+                    if(distToMelody < 2.5) { notify("¡NO LASTIMES A MELODY!", "pink"); showDialogue("m_scared", "melody-speak"); melodyState = M_STATE.FLEE_KUROMI; obj.time = 100; }
+                    if(distToCat < 2.5) {
+                        if(currentState === AI_STATE.SEARCH || currentState === AI_STATE.SUSPICION || currentState === AI_STATE.CHASE || currentState === AI_STATE.INVESTIGATE_LAST_SEEN) {
+                            currentState = AI_STATE.STUNNED; stunTimer = 3.0; notify("¡LO GOLPEASTE!", "success"); showDialogue('noise', 'chococat-speak'); chococatBody.velocity.set(0,0,0); obj.time = 100;
+                        } else if (currentState === AI_STATE.RAGE) { notify("¡ES INMUNE AL DAÑO!", "danger"); }
+                    } else if(distToCat < 15 && currentState === AI_STATE.SEARCH) {
+                        targetPosition.copy(obj.mesh.position); currentState = AI_STATE.SUSPICION; showDialogue('noise', 'chococat-speak');
+                    }
+                }
+
+                if(obj.time >= 3.0 && obj.time < 100) { 
+                    scene.remove(obj.mesh); world.removeBody(obj.body); obj.time = 101; 
+                    if(lastProjectile === obj) lastProjectile = null;
+                }
+
+                if(obj.time >= 100) {
+                    throwables.splice(i, 1);
+                }
+            }
+        }
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if(!gameStarted) { renderer.render(scene, camera); return; }
+
+            const dt = Math.min(clock.getDelta(), 0.1);
+            const timeAlive = clock.getElapsedTime();
+            world.step(1/60, dt, 3);
+            
+            if(isEating) { eatingTimer -= dt; if(eatingTimer <= 0) isEating = false; }
+            if(isSleeping) document.getElementById('sleep-overlay').style.display = 'flex';
+            else document.getElementById('sleep-overlay').style.display = 'none';
+
+            keyItems.forEach((k, index) => {
+                if(k.visible && camera.position.distanceTo(k.position) < 2) {
+                    k.visible = false; keysCollected++;
+                    document.getElementById('objective').innerText = `LLAVES: ${keysCollected}/${totalKeys} 🗝️`;
+                    notify("¡LLAVE ENCONTRADA!", "success"); showDialogue('key_found', 'system-speak');
+                    if(keysCollected === totalKeys) { notify("¡PUERTA DESBLOQUEADA!", "success"); doorLight.color.setHex(0x00ff00); }
+                }
+                k.rotation.y += dt;
+            });
+
+            if(camera.position.distanceTo(doorMesh.position) < 8) {
+                if(currentState === AI_STATE.STUNNED) { triggerTrapEnding(); } 
+                else if(keysCollected >= totalKeys) { triggerWin(); } 
+                else { showDialogue('door_locked', 'system-speak'); }
+            }
+
+            if(projectileCameraMode && lastProjectile && lastProjectile.time < 100) {
+                camera.position.copy(lastProjectile.mesh.position).add(new THREE.Vector3(0, 0.5, 0));
+                camera.lookAt(lastProjectile.mesh.position.clone().add(lastProjectile.body.velocity));
+            } else if (isSleeping) {
+                playerBody.velocity.set(0,0,0);
+                camera.position.copy(bedMesh.position); camera.position.y = 2.5; 
+            } else if((controls.isLocked || isMobile) && !isAbducted) {
+                const speed = keys.shift ? 10 : 5;
+                const fwd = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).setY(0).normalize();
+                const right = new THREE.Vector3(1,0,0).applyQuaternion(camera.quaternion).setY(0).normalize();
+                
+                const dir = fwd.clone().multiplyScalar(keys.w - keys.s).add(right.clone().multiplyScalar(keys.d - keys.a));
+                if (dir.lengthSq() > 0) dir.normalize();
+                const vel = dir.multiplyScalar(speed);
+
+                playerBody.velocity.x = vel.x; playerBody.velocity.z = vel.z;
+                camera.position.copy(playerBody.position);
+            }
+
+            updateAI(dt, timeAlive);
+            updateThrowables(dt);
+            renderer.render(scene, camera);
+        }
+        animate();
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
