@@ -3,9 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Escape: Chococat & Kuromi's Mischief (Enhanced)</title>
+    
+    <!-- Etiquetas SEO para que Google lo indexe mejor -->
+    <meta name="description" content="Un divertido juego web 3D de terror y supervivencia. ¡Escapa de la furia de Chococat, Kuromi, My Melody y Molang! Juega gratis en tu navegador o celular.">
+    <meta name="keywords" content="Chococat, Kuromi, My Melody, Molang, juego web, 3D, survival horror, escape, Sanrio fan game">
+    <meta name="author" content="Tu Nombre/Nickname">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Etiquetas Open Graph (Para que se vea un cuadro bonito al compartir en WhatsApp/Redes) -->
+    <meta property="og:title" content="Escape: Chococat & Kuromi's Mischief">
+    <meta property="og:description" content="Sobrevive y escapa de la furia de Chococat en este juego 3D web. ¡Prueba el modo Granny!">
+    <meta property="og:type" content="website">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Courier New', Courier, monospace; touch-action: none; user-select: none; -webkit-user-select: none; }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; position: fixed; overflow: hidden; background-color: #000; font-family: 'Courier New', Courier, monospace; touch-action: none; user-select: none; -webkit-user-select: none; overscroll-behavior: none; }
         
         /* --- UI PRINCIPAL --- */
         #ui {
@@ -215,6 +227,27 @@
         #video-prompt .highlight { color: yellow; font-size: 18px; margin-top: 15px; animation: pulseAlert 1s infinite alternate; }
         .prompt-buttons { display: flex; gap: 15px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
         .prompt-buttons button { padding: 15px 25px; font-weight: bold; font-size: 18px; border-radius: 10px; border: none; cursor: pointer; pointer-events: auto; }
+
+        /* --- AJUSTES MÓVILES (PANTALLA PEQUEÑA Y RESPONSIVE) --- */
+        @media (max-width: 768px) {
+            #status { font-size: 18px; }
+            #objective { font-size: 16px; }
+            #stealth-indicator { font-size: 16px; }
+            #controls { font-size: 10px; line-height: 1.2; }
+            .action-btn { width: 55px; height: 55px; font-size: 24px; }
+            #dialogue-box { font-size: 16px; bottom: 100px; width: 95%; padding: 10px; }
+            #kitty-status, #kuromi-status, #melody-status, #molang-status { font-size: 12px; margin-top: 2px;}
+            .alert-box { font-size: 12px; padding: 10px; width: 250px;}
+            #mobile-controls { bottom: 15px; right: 15px; gap: 10px; }
+            #joystick-base { width: 100px; height: 100px; }
+            #joystick-stick { width: 40px; height: 40px; top: 30px; left: 30px; }
+            #start-screen h1 { font-size: 12vw; margin-bottom: 20px; }
+            .difficulty-btn { font-size: 16px; padding: 10px 15px; width: 90%; margin: 5px auto; }
+            #video-prompt { width: 90%; padding: 15px; top: 5%; }
+            #video-prompt h2 { font-size: 22px; }
+            #video-prompt p { font-size: 14px; }
+            .prompt-buttons button { padding: 10px 15px; font-size: 16px; }
+        }
     </style>
     <script type="importmap">
         {
@@ -380,6 +413,11 @@
                 document.getElementById('mobile-controls').style.display = 'grid';
                 document.getElementById('controls').innerHTML = "Usa el joystick (izq) y la pantalla (der) para mirar.<br>Toca los botones para acciones.";
                 document.getElementById('video-keys-hint').style.display = 'none';
+                
+                // Forzar pantalla completa para ocultar barras del navegador
+                const docEl = document.documentElement;
+                if (docEl.requestFullscreen) docEl.requestFullscreen().catch(e => console.warn(e));
+                else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
             }
 
             if(mode === 'easy') {
@@ -1938,10 +1976,16 @@
             renderer.render(scene, camera);
         }
         animate();
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+        
+        function handleResize() {
+            camera.aspect = window.innerWidth / window.innerHeight; 
+            camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+            window.scrollTo(0, 0); // Ayuda a reajustar en móvil
+        }
+        
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', () => setTimeout(handleResize, 200));
     </script>
 </body>
 </html>
