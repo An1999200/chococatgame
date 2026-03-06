@@ -2,9 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>CHOCOCAT EVADE v1.0</title>
+    <title>CHOCOCAT EVADE v1.0.1</title>
     
-    <meta name="description" content="CHOCOCAT EVADE v1.0 - Un divertido juego web 3D de terror y supervivencia. ¡Escapa de la furia de Chococat, Kuromi, My Melody y Cinnamoroll! Juega gratis.">
+    <meta name="description" content="Testing Game">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; position: fixed; overflow: hidden; background-color: #000; font-family: 'Courier New', Courier, monospace; touch-action: none; user-select: none; -webkit-user-select: none; overscroll-behavior: none; }
@@ -267,7 +267,7 @@
 <body>
     <div id="start-screen">
         <button id="music-toggle-btn" onclick="toggleMusic(event)">🔊</button>
-        <h1 style="font-size: 9vw;">CHOCOCAT EVADE<br><span style="font-size: 0.4em; color: white; text-shadow: none;">v1.0</span></h1>
+        <h1 style="font-size: 9vw;">CHOCOCAT EVADE<br><span style="font-size: 0.4em; color: white; text-shadow: none;">v1.0.1</span></h1>
         
         <div id="performance-info">
             <span class="pc-text">🖥️ Recomendado en PC:</span> Disfruta de la mejor experiencia con gráficos Ultra, sombras dinámicas y controles precisos.<br>
@@ -396,18 +396,16 @@
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         
-        // OPTIMIZACIÓN: Alto rendimiento y antialias solo en PC
-        const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, powerPreference: "high-performance" });
-        renderer.setPixelRatio(isMobile ? 0.8 : window.devicePixelRatio); // Reducir pixel ratio en móvil para +FPS
+        // OPTIMIZACIÓN: Antialias activado siempre. Pixel ratio nativo en móvil (sin pixelado)
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 2.0 : 3.0)); // Nativo en móvil, cap en PC
         renderer.setSize(window.innerWidth, window.innerHeight);
         
-        // SOMBRAS E ILUMINACIÓN GLOBAL: Alta calidad en PC, desactivadas en móvil
-        renderer.shadowMap.enabled = !isMobile; 
-        if(!isMobile) { 
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.0;
-        }
+        // SOMBRAS E ILUMINACIÓN GLOBAL: Calidad alta en PC, básica pero presente en móvil
+        renderer.shadowMap.enabled = true; 
+        renderer.shadowMap.type = isMobile ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = isMobile ? 1.2 : 1.0;
         document.body.appendChild(renderer.domElement);
 
         const world = new CANNON.World();
@@ -780,18 +778,32 @@
 
         // LINTERNA Y LUCES
         const flashLight = new THREE.SpotLight(0xffffff, 200, 60, 0.6, 0.5, 1);
-        flashLight.castShadow = !isMobile;
-        if (!isMobile) {
-            flashLight.shadow.mapSize.width = 1024;
-            flashLight.shadow.mapSize.height = 1024;
-            flashLight.shadow.bias = -0.001;
-        }
+        flashLight.castShadow = true; // Sombras activadas en todos los dispositivos
+        flashLight.shadow.mapSize.width = isMobile ? 512 : 1024;
+        flashLight.shadow.mapSize.height = isMobile ? 512 : 1024;
+        flashLight.shadow.bias = -0.001;
         flashLight.position.set(0.5, -0.3, 0);
         flashLight.target.position.set(0, 0, -10);
         camera.add(flashLight); camera.add(flashLight.target);
         
-        // Más luz ambiente en móvil para compensar la falta de sombras, más oscura en PC
-        scene.add(new THREE.AmbientLight(0x222222, isMobile ? 1.0 : 0.6)); 
+        // Luz ambiente más dramática: oscura para crear tensión, personajes iluminados por fill light
+        scene.add(new THREE.AmbientLight(0x111122, isMobile ? 0.7 : 0.4));
+        
+        // Luz de relleno suave para los personajes (evita que se vean totalmente negros en las sombras)
+        const fillLight = new THREE.DirectionalLight(0x4466aa, isMobile ? 0.6 : 0.4);
+        fillLight.position.set(0, 20, 10);
+        fillLight.castShadow = true;
+        fillLight.shadow.mapSize.width = isMobile ? 512 : 1024;
+        fillLight.shadow.mapSize.height = isMobile ? 512 : 1024;
+        fillLight.shadow.camera.near = 0.5;
+        fillLight.shadow.camera.far = 300;
+        fillLight.shadow.camera.left = -150;
+        fillLight.shadow.camera.right = 150;
+        fillLight.shadow.camera.top = 150;
+        fillLight.shadow.camera.bottom = -150;
+        fillLight.shadow.bias = -0.0005;
+        scene.add(fillLight);
+        
         const emergencyLight = new THREE.AmbientLight(0xffffff, 2);
         let emergencyOn = false;
 
@@ -820,7 +832,7 @@
             roughness: 0.8, metalness: 0.2 
         });
         const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.rotation.x = -Math.PI / 2; floor.receiveShadow = !isMobile;
+        floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
         scene.add(floor);
         const floorBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane(), material: slipMat });
         floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
@@ -843,7 +855,7 @@
             const wall = new THREE.Mesh(boxGeo, boxMat);
             wall.scale.y = 1 + Math.random() * 2; 
             wall.position.set(x, 3 * wall.scale.y, z);
-            if(!isMobile) { wall.castShadow = true; wall.receiveShadow = true; }
+            if(!isMobile) { wall.castShadow = true; wall.receiveShadow = true; } else { wall.castShadow = true; }
             scene.add(wall); walls.push(wall);
             const wb = new CANNON.Body({ mass: 0, shape: new CANNON.Box(new CANNON.Vec3(2, 3 * wall.scale.y, 2)), material: slipMat });
             wb.position.copy(wall.position);
@@ -989,15 +1001,32 @@
 
         function animateModel(mesh, isMoving, dt, speedMultiplier = 1) {
             if(!mesh) return;
-            if (isMoving) {
-                mesh.rotation.z = Math.sin(Date.now() * 0.005 * speedMultiplier) * 0.1;
+
+            if (mesh.userData && mesh.userData.action) {
+                // Si el modelo tiene animación de esqueleto real (huesos)
+                if (isMoving) {
+                    // Ajustamos la velocidad de la animación dependiendo de qué tan rápido se mueve la IA
+                    mesh.userData.action.timeScale = speedMultiplier; 
+                    mesh.userData.action.paused = false;
+                } else {
+                    // Velocidad lenta para que respire o haga una acción "idle" en lugar de congelarse
+                    mesh.userData.action.timeScale = 0.2; 
+                }
+                // Anulamos la rotación procedural para que no se balancee falsamente y se vea feo
+                mesh.rotation.z = 0; 
             } else {
-                mesh.rotation.z = Math.sin(Date.now() * 0.002) * 0.02;
+                // --- MODO T-POSE / BALANCEO PROCEDURAL (Cuando no hay animaciones) ---
+                if (isMoving) {
+                    mesh.rotation.z = Math.sin(Date.now() * 0.005 * speedMultiplier) * 0.1;
+                } else {
+                    mesh.rotation.z = Math.sin(Date.now() * 0.002) * 0.02;
+                }
             }
         }
 
-        // --- MODELOS ---
+        // --- MODELOS Y SISTEMA DE ANIMACIONES ---
         const loader = new GLTFLoader();
+        const mixers = []; // Arreglo global para guardar las animaciones de todos los personajes
 
         // MY MELODY
         let melodyMesh; let melodyBody;
@@ -1014,6 +1043,17 @@
              model.scale.set(1.4, 1.4, 1.4);
              model.traverse((c) => { if(c.isMesh) { c.castShadow = !isMobile; c.receiveShadow = !isMobile; } });
              melodyMesh.add(model);
+
+             // Comprobamos y activamos la animación si la tiene
+             if (gltf.animations && gltf.animations.length > 0) {
+                 const mixer = new THREE.AnimationMixer(model);
+                 const action = mixer.clipAction(gltf.animations[0]); // Seleccionamos la primera animación
+                 action.play();
+                 melodyMesh.userData.mixer = mixer;
+                 melodyMesh.userData.action = action;
+                 mixers.push(mixer);
+             }
+
              document.getElementById('melody-status').style.display = 'block';
         }, undefined, function(e){ console.log("Melody Default"); document.getElementById('melody-status').style.display = 'block'; });
 
@@ -1033,8 +1073,19 @@
             kuromiMesh.remove(kuPlaceholder);
             const model = gltf.scene;
             model.scale.set(1.5, 1.5, 1.5);
-            model.traverse((c) => { if(c.isMesh) { c.castShadow = !isMobile; c.receiveShadow = !isMobile; } });
+            model.traverse((c) => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
             kuromiMesh.add(model);
+
+            // Comprobamos y activamos la animación si la tiene
+            if (gltf.animations && gltf.animations.length > 0) {
+                const mixer = new THREE.AnimationMixer(model);
+                const action = mixer.clipAction(gltf.animations[0]); 
+                action.play();
+                kuromiMesh.userData.mixer = mixer;
+                kuromiMesh.userData.action = action;
+                mixers.push(mixer);
+            }
+
             document.getElementById('kuromi-status').style.display = 'block';
         }, undefined, function(e){ console.log("Kuromi Default"); });
 
@@ -1054,8 +1105,19 @@
             chococatMesh.remove(cPlaceholder);
             const model = gltf.scene;
             model.scale.set(1.5, 1.5, 1.5); 
-            model.traverse((c) => { if(c.isMesh) { c.castShadow = !isMobile; c.receiveShadow = !isMobile; if(c.material) c.material.emissive = new THREE.Color(0x222222); } });
+            model.traverse((c) => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; if(c.material) c.material.emissive = new THREE.Color(0x111111); } });
             chococatMesh.add(model);
+
+            // Comprobamos y activamos la animación si la tiene
+            if (gltf.animations && gltf.animations.length > 0) {
+                const mixer = new THREE.AnimationMixer(model);
+                const action = mixer.clipAction(gltf.animations[0]); 
+                action.play();
+                chococatMesh.userData.mixer = mixer;
+                chococatMesh.userData.action = action;
+                mixers.push(mixer);
+            }
+
         }, undefined, function (error) { console.log("Chococat Default"); });
 
         chococatBody = new CANNON.Body({ mass: 20, shape: new CANNON.Sphere(1), position: new CANNON.Vec3(40, 1, 40), fixedRotation: true, material: slipMat, linearDamping: 0.1 });
@@ -1075,8 +1137,19 @@
              cinnamorollMesh.remove(ciPlaceholder);
              const model = gltf.scene;
              model.scale.set(1.6, 1.6, 1.6);
-             model.traverse((c) => { if(c.isMesh) { c.castShadow = !isMobile; c.receiveShadow = !isMobile; } });
+             model.traverse((c) => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
              cinnamorollMesh.add(model);
+
+             // Comprobamos y activamos la animación si la tiene
+             if (gltf.animations && gltf.animations.length > 0) {
+                 const mixer = new THREE.AnimationMixer(model);
+                 const action = mixer.clipAction(gltf.animations[0]); 
+                 action.play();
+                 cinnamorollMesh.userData.mixer = mixer;
+                 cinnamorollMesh.userData.action = action;
+                 mixers.push(mixer);
+             }
+
              document.getElementById('cinnamoroll-status').style.display = 'block';
         }, undefined, function(e){ console.log("Cinnamoroll Default"); document.getElementById('cinnamoroll-status').style.display = 'block'; });
 
@@ -1280,14 +1353,14 @@
                     document.getElementById('cinnamoroll-status').innerText = "☁️ CINNAMOROLL: ACOMPAÑANDO";
                     speed = 14.0; // Velocidad para mantenerse a tu ritmo
 
-                    // Calcular posición detrás y arriba de la cámara
+                    // Calcular posición detrás y al lado de la cámara, a altura visible
                     const backDir = new THREE.Vector3(0, 0, 1).applyQuaternion(camera.quaternion).normalize();
                     const rightDir = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion).normalize();
                     
                     const hoverPos = playerPos.clone()
-                        .add(backDir.multiplyScalar(3.5)) // 3.5m detrás
-                        .add(rightDir.multiplyScalar(2)); // 2m a la derecha
-                    hoverPos.y += 2.0; // Arriba de la cabeza
+                        .add(backDir.multiplyScalar(2.5)) // 2.5m detrás
+                        .add(rightDir.multiplyScalar(1.5)); // 1.5m a la derecha
+                    hoverPos.y += 0.5; // Solo un poco arriba del hombro, visible en pantalla
                     
                     cinnamorollTarget.copy(hoverPos);
                     break;
@@ -1312,6 +1385,14 @@
                 }
             } else {
                 cinnamorollBody.velocity.set(0, 0, 0);
+            }
+
+            // Ajustar la velocidad de la animación esquelética (si tiene huesos)
+            if (cinnamorollMesh.userData && cinnamorollMesh.userData.action) {
+                const v = cinnamorollBody.velocity;
+                // Calculamos la magnitud de forma segura ya que Vec3 no tiene lengthSq en CannonJS
+                const isMoving = (v.x * v.x + v.y * v.y + v.z * v.z) > 0.1;
+                cinnamorollMesh.userData.action.timeScale = isMoving ? (speed / 7.0) : 0.5; // Vuela rápido o flota lento
             }
         }
 
@@ -1621,6 +1702,24 @@
                 visionLine.visible = false; targetLine.visible = false;
             }
 
+            // VERIFICACIÓN DE JUMPSCARE GLOBAL
+            // La distancia se aumentó de 1.5 a 2.5 porque los cuerpos de físicas tienen un tamaño base
+            // que los mantiene separados al chocar.
+            const checkJumpscare = () => {
+                if(distToPlayer < (2.5 * currentScale) && currentState !== AI_STATE.STUNNED && currentState !== AI_STATE.SLEEPING && currentState !== AI_STATE.BED_SHOCK) {
+                    if(hasImmunity) {
+                        let pushDir = new THREE.Vector3().subVectors(catPosThree, playerPos).normalize();
+                        chococatBody.velocity.set(pushDir.x * 20, 5, pushDir.z * 20);
+                        notify("¡INMUNIDAD TE PROTEGIÓ DE CHOCOCAT!", "info");
+                    } else {
+                        triggerJumpscare("¡CHOCOCAT TE ATRAPÓ!");
+                    }
+                }
+            };
+            checkJumpscare();
+
+            if (isDead) return; // Detener actualizaciones si ya estamos muertos
+
             const melodyPos = melodyBody ? new THREE.Vector3(melodyBody.position.x, melodyBody.position.y, melodyBody.position.z) : new THREE.Vector3(0, -100, 0);
             const kuromiPos = kuromiBody ? new THREE.Vector3(kuromiBody.position.x, kuromiBody.position.y, kuromiBody.position.z) : new THREE.Vector3(0, -100, 0);
             
@@ -1716,18 +1815,6 @@
             let currentSpeed = baseSpeed * difficultySettings.speedMultiplier + (loneliness * 0.5);
             const statusEl = document.getElementById('status');
             
-            const checkJumpscare = () => {
-                if(distToPlayer < (1.5 * currentScale)) {
-                    if(hasImmunity) {
-                        let pushDir = new THREE.Vector3().subVectors(catPosThree, playerPos).normalize();
-                        chococatBody.velocity.set(pushDir.x * 20, 5, pushDir.z * 20);
-                        notify("¡INMUNIDAD TE PROTEGIÓ DE CHOCOCAT!", "info");
-                    } else {
-                        triggerJumpscare("¡CHOCOCAT TE ATRAPÓ!");
-                    }
-                }
-            };
-
             switch(currentState) {
                 case AI_STATE.SEARCH:
                     statusEl.innerText = "ESTADO: BUSCANDO ATENCIÓN"; statusEl.style.color = "lime";
@@ -1763,7 +1850,6 @@
                     }
 
                     smartMoveBody(chococatBody, targetPosition, currentSpeed * 1.5, currentScale);
-                    checkJumpscare();
                     break;
                 case AI_STATE.LOVE_CHASE:
                     statusEl.innerText = "ESTADO: OBSESIÓN ❤️"; statusEl.style.color = "#ff00ff";
@@ -1775,7 +1861,6 @@
                     
                     if (Math.random() < 0.005) showDialogue(Math.random() > 0.5 ? 'love_chase_1' : 'love_chase_2', 'love-speak');
                     
-                    checkJumpscare();
                     if(!canSee) { currentState = AI_STATE.INVESTIGATE_LAST_SEEN; baseSpeed *= 1.5; }
                     break;
                 case AI_STATE.BEGGING_FOOD:
@@ -1789,7 +1874,6 @@
                     statusEl.innerText = "ESTADO: !!! FURIA !!!"; statusEl.style.color = "#880000";
                     document.getElementById('rage-overlay').style.display = 'block'; chococatMesh.scale.set(5,5,5); 
                     targetPosition.copy(playerPos); smartMoveBody(chococatBody, targetPosition, 25.0, currentScale); 
-                    checkJumpscare();
                     break;
                 case AI_STATE.SURVEILLANCE:
                     statusEl.innerText = "ESTADO: VIGILANDO..."; statusEl.style.color = "white";
@@ -2147,6 +2231,8 @@
                 }
 
                 updateThrowables(dt);
+                // Actualizar animaciones (incluso estando muerto para que se vea cinemático)
+                mixers.forEach(mixer => mixer.update(dt));
                 renderer.render(scene, camera);
                 return; // Bloquea todo el resto del código del jugador para que no se mueva
             }
@@ -2206,6 +2292,10 @@
 
             updateAI(dt, timeAlive);
             updateThrowables(dt);
+            
+            // --- ACTUALIZACIÓN DE ANIMACIONES SKELETAL ---
+            mixers.forEach(mixer => mixer.update(dt));
+
             renderer.render(scene, camera);
         }
         animate();
