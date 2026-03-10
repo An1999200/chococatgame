@@ -237,6 +237,50 @@
         }
         @keyframes pulseLove { 0% { opacity: 0.3; } 50% { opacity: 0.8; } 100% { opacity: 0.3; } }
 
+        /* --- MENÚ DE HABLAR CON PERSONAJES --- */
+        #talk-menu {
+            display: none; position: absolute; bottom: 140px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 650px; z-index: 15; pointer-events: auto;
+            background: rgba(10, 5, 20, 0.92); border: 2px solid #ff69b4;
+            border-radius: 15px; padding: 14px; box-shadow: 0 0 30px rgba(255,105,180,0.4);
+            animation: slideInUp 0.2s ease-out;
+        }
+        @keyframes slideInUp { from { transform: translateX(-50%) translateY(20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+        #talk-menu-title {
+            text-align: center; font-size: 14px; color: #ff69b4; margin-bottom: 10px;
+            font-family: 'Courier New', monospace; letter-spacing: 2px; text-transform: uppercase;
+        }
+        #talk-menu-chars {
+            display: flex; gap: 8px; margin-bottom: 10px; justify-content: center;
+        }
+        .talk-char-btn {
+            flex: 1; padding: 8px 5px; border-radius: 8px; border: 2px solid transparent;
+            font-family: 'Courier New', monospace; font-size: 12px; cursor: pointer;
+            transition: all 0.2s; background: rgba(0,0,0,0.5); color: white;
+        }
+        .talk-char-btn.active-kuromi { border-color: #a020f0; background: rgba(80,0,120,0.7); color: #dda0dd; }
+        .talk-char-btn.active-melody { border-color: #ff69b4; background: rgba(120,0,60,0.7); color: #ffb7c5; }
+        .talk-char-btn.active-cinnamoroll { border-color: #87ceeb; background: rgba(0,60,100,0.7); color: #87ceeb; }
+        .talk-char-btn.active-chococat { border-color: #ff3333; background: rgba(80,0,0,0.7); color: #ff8888; }
+        .talk-char-btn:hover { transform: scale(1.05); }
+        #talk-phrases {
+            display: flex; flex-wrap: wrap; gap: 7px; justify-content: center;
+        }
+        .talk-phrase-btn {
+            padding: 7px 12px; border-radius: 20px; border: 1px solid #555;
+            background: rgba(30, 10, 50, 0.8); color: #eee; font-family: 'Courier New', monospace;
+            font-size: 12px; cursor: pointer; transition: all 0.15s;
+        }
+        .talk-phrase-btn:hover { transform: scale(1.04); border-color: #ff69b4; }
+        #talk-close {
+            display: block; margin: 10px auto 0; padding: 5px 20px;
+            background: transparent; border: 1px solid #555; color: #888;
+            border-radius: 10px; font-family: monospace; cursor: pointer; font-size: 11px;
+        }
+        #talk-close:hover { border-color: #ff69b4; color: #ff69b4; }
+        #btn-talk { background: rgba(255, 105, 180, 0.35); border-color: #ff69b4; }
+        #btn-talk:active { background: rgba(255, 105, 180, 0.8); }
+
         /* --- AJUSTES MÓVILES --- */
         @media (max-width: 768px) {
             #status { font-size: 18px; }
@@ -301,6 +345,19 @@
     <div id="ignore-vignette"></div>
     <div id="abduct-overlay"></div>
     <div id="dialogue-box"></div>
+
+    <!-- MENÚ HABLAR CON PERSONAJES -->
+    <div id="talk-menu">
+        <div id="talk-menu-title">💬 ¿CON QUIÉN QUIERES HABLAR?</div>
+        <div id="talk-menu-chars">
+            <button class="talk-char-btn" id="talk-kuromi" onclick="selectTalkChar('kuromi')">😈 KUROMI</button>
+            <button class="talk-char-btn" id="talk-melody" onclick="selectTalkChar('melody')">🌸 MY MELODY</button>
+            <button class="talk-char-btn" id="talk-cinnamoroll" onclick="selectTalkChar('cinnamoroll')">☁️ CINNAMOROLL</button>
+            <button class="talk-char-btn" id="talk-chococat" onclick="selectTalkChar('chococat')">🐱 CHOCOCAT</button>
+        </div>
+        <div id="talk-phrases"></div>
+        <button id="talk-close" onclick="closeTalkMenu()">✕ CERRAR [T]</button>
+    </div>
     
     <div id="sleep-overlay">
         <div>Zzz...</div>
@@ -321,6 +378,7 @@
         <div class="action-btn" id="btn-run">🏃</div>
         <div class="action-btn" id="btn-interact">🖐️</div>
         <div class="action-btn" id="btn-call">☁️</div>
+        <div class="action-btn" id="btn-talk">💬</div>
     </div>
 
     <div id="mobile-debug-menu">
@@ -345,7 +403,7 @@
             WASD: Mover | SHIFT: Correr/Sigilo | F: Linterna<br>
             L: Luz Emergencia | <b>C: Comer</b><br>
             CLICK: Tirar Caja | <b>G: Dormir (En cama)</b><br>
-            <b>X: Llamar a Cinnamoroll ☁️</b>
+            <b>X: Llamar a Cinnamoroll ☁️</b> | <b>T: Hablar 💬</b>
         </div>
         <div id="debug-controls">
             <b>MODO DEBUG:</b><br>
@@ -568,6 +626,33 @@
 
         let gameStarted = false;
         let difficultySettings = { speedMultiplier: 1.0, detectionRadius: 100, lonelinessRate: 1.0, aggroPersistence: 5.0, keysRequired: 3, hearFootsteps: false, debug: false };
+        let keysCollected = 0;
+        let totalKeys = 3;
+
+        // LLAVES — declaradas aquí para que respawnKeys() pueda usarlas desde setDifficulty
+        const keyItems = [];
+        let keyGeo, keyMat;
+        function spawnKeys() {
+            if(!keyGeo) {
+                keyGeo = new THREE.TorusKnotGeometry(0.5, 0.2, 64, 8);
+                keyMat = new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xaa4400 });
+            }
+            keyItems.forEach(k => scene.remove(k)); keyItems.length = 0;
+            for(let i=0; i<totalKeys; i++) {
+                let kx = (Math.random() - 0.5) * (MAP_SIZE - 40); 
+                let kz = (Math.random() - 0.5) * (MAP_SIZE - 40);
+                const onSecondFloor = Math.random() > 0.7;
+                let ky = 1.5;
+                if (onSecondFloor) {
+                    if (Math.random() > 0.5) { kx = 60 + (Math.random()-0.5)*30; kz = 60 + (Math.random()-0.5)*30; ky = 9.5; }
+                    else { kx = -60 + (Math.random()-0.5)*30; kz = -60 + (Math.random()-0.5)*30; ky = 9.5; }
+                }
+                const key = new THREE.Mesh(keyGeo, keyMat); key.position.set(kx, ky, kz);
+                scene.add(key); keyItems.push(key);
+                const kl = new THREE.PointLight(0xffaa00, 1, 10); kl.position.copy(key.position); scene.add(kl);
+            }
+        }
+        function respawnKeys() { spawnKeys(); }
 
         window.setDifficulty = (mode) => {
             if (listener.context.state === 'suspended') listener.context.resume();
@@ -623,6 +708,7 @@
             totalKeys = difficultySettings.keysRequired;
             document.getElementById('objective').innerText = `LLAVES: 0/${totalKeys} 🗝️`;
             respawnKeys();
+            buildPatrolWaypoints(); // IA: Construir waypoints de patrulla inteligente
             
             gameStarted = true;
             
@@ -717,6 +803,14 @@
             ci_alert: { es: "¡Hola gatito, mira quién está aquí! ☁️", en: "Hi kitty, look who's here! ☁️" },
             ci_follow_start: { es: "¡Vamos juntos! ☁️", en: "Let's go together! ☁️" },
             ci_follow_stop: { es: "¡Me voy a volar un rato! ☁️", en: "Going to fly for a bit! ☁️" },
+            ci_catch: { es: "¡No huyas de mí! ¡Quédate conmigo! ☁️", en: "Don't run from me! Stay with me! ☁️" },
+            ci_hurt: { es: "Ay... ¿por qué me hiciste eso?... ☁️", en: "Ouch... why did you do that?... ☁️" },
+            ci_fall: { es: "*cayendo* Auuuu... ☁️", en: "*falling* Ooooww... ☁️" },
+            ci_unconscious: { es: "...", en: "..." },
+            
+            k_worried: { es: "¡Cinnamoroll! ¡Despierta!", en: "Cinnamoroll! Wake up!" },
+            m_worried: { es: "¡No! ¡Cinnamoroll!", en: "No! Cinnamoroll!" },
+            cat_guilty: { es: "¿Qué... qué he hecho?", en: "What... what have I done?" },
 
             trap_ending: { es: "¿Creíste que podías engañarme?", en: "Thought you could trick me?" },
             keys_stolen: { es: "Son mías... ¡Empieza de nuevo!", en: "They are mine... Start over!" },
@@ -724,6 +818,50 @@
             wake_rage: { es: "¿ME QUERÍAS DEJAR SOLO?", en: "DID YOU WANT TO LEAVE ME ALONE?" },
             wake_stealth: { es: "Zzz... te quiero... Zzz...", en: "Zzz... love you... Zzz..." },
             noise: { es: "¡Anomalía acústica detectada! ¡Voy para allá!", en: "Acoustic anomaly detected! Heading there!" },
+
+            // DIÁLOGOS DE HABLAR CON PERSONAJES
+            // Kuromi - frases del jugador
+            talk_k_nosigo: { es: "¡No me sigas más, Kuromi!", en: "Stop following me, Kuromi!" },
+            talk_k_eres_linda: { es: "Kuromi, ¡eres súper linda! 🖤", en: "Kuromi, you're super cute! 🖤" },
+            talk_k_ayuda: { es: "¡Ayúdame con Chococat!", en: "Help me with Chococat!" },
+            talk_k_molesta: { es: "Me estás molestando, Kuromi 😤", en: "You're bothering me, Kuromi 😤" },
+            talk_k_amigos: { es: "¿Podemos ser amigos?", en: "Can we be friends?" },
+            // Respuestas de Kuromi
+            kr_nosigo: { es: "¡Jajaja! ¡Ni en sueños! Tú me entretiienes~ 😈", en: "Hahaha! Not in your dreams! You amuse me~ 😈" },
+            kr_eres_linda: { es: "...Oh. Supongo que eso está bien. Pero no creas que somos amigos. 🖤", en: "...Oh. I suppose that's fine. But don't think we're friends. 🖤" },
+            kr_ayuda: { es: "¿Yo? ¡Ayudarte? ...tal vez. Pero me debes una. 😏", en: "Me? Help you? ...maybe. But you owe me one. 😏" },
+            kr_molesta: { es: "¡Tú sí que eres interesante! Precisamente por eso no paro 😈", en: "You sure are interesting! That's exactly why I won't stop 😈" },
+            kr_amigos: { es: "Ammm... supongo. Pero no se lo digas a nadie. Arruinaría mi reputación. 🖤", en: "Ummm... I guess. But don't tell anyone. It'd ruin my reputation. 🖤" },
+            // My Melody - frases del jugador
+            talk_m_nosigo: { es: "Por favor Melody, no me sigas 🙏", en: "Please Melody, don't follow me 🙏" },
+            talk_m_eres_linda: { es: "¡Eres tan bonita, Melody! 🌸", en: "You're so pretty, Melody! 🌸" },
+            talk_m_ayuda: { es: "¡Necesito tu ayuda, Melody!", en: "I need your help, Melody!" },
+            talk_m_miedo: { es: "Melody, ¡tengo mucho miedo!", en: "Melody, I'm really scared!" },
+            talk_m_gracias: { es: "Gracias por el escudo, Melody 💖", en: "Thanks for the shield, Melody 💖" },
+            // Respuestas de My Melody
+            mr_nosigo: { es: "Oh... ¿no quieres compañía? 🥺 Está bien... pero ten cuidado.", en: "Oh... you don't want company? 🥺 Okay... but be careful." },
+            mr_eres_linda: { es: "¡Aww! ¡Tú también eres muy amable! 🌸✨ ¡Me alegra conocerte!", en: "Aww! You're so kind too! 🌸✨ I'm glad to meet you!" },
+            mr_ayuda: { es: "¡Claro que sí! ¡Siempre estoy aquí para ti! Haré lo que pueda 🌸", en: "Of course! I'm always here for you! I'll do what I can 🌸" },
+            mr_miedo: { es: "¡No te preocupes! ¡Estoy aquí contigo! Todo va a estar bien 🌸💖", en: "Don't worry! I'm here with you! Everything will be okay 🌸💖" },
+            mr_gracias: { es: "¡De nada! ¡Me encanta ayudar a mis amigos! ¡Tú puedes! 💖🌸", en: "You're welcome! I love helping my friends! You can do it! 💖🌸" },
+            // Cinnamoroll - frases del jugador
+            talk_c_nosigo: { es: "Cinnamoroll, por favor no me sigas 😅", en: "Cinnamoroll, please don't follow me 😅" },
+            talk_c_eres_lindo: { es: "¡Eres tan esponjoso, Cinnamoroll! ☁️", en: "You're so fluffy, Cinnamoroll! ☁️" },
+            talk_c_vuela: { es: "¡Vuela lejos un ratito, anda! ☁️", en: "Fly away for a little bit, go on! ☁️" },
+            talk_c_abrazos: { es: "¡Quiero un abrazo de nube! ☁️", en: "I want a cloud hug! ☁️" },
+            talk_c_choco: { es: "¿Puedes distraer a Chococat?", en: "Can you distract Chococat?" },
+            // Chococat - frases del jugador
+            talk_cat_nosigo: { es: "P-por favor... ¡No me sigas!", en: "P-please... Don't follow me!" },
+            talk_cat_eres_lindo: { es: "Chococat, ¡eres muy lindo! 🐱", en: "Chococat, you're so cute! 🐱" },
+            talk_cat_calmate: { es: "¡Cálmate! ¡No quiero hacerte daño!", en: "Calm down! I don't want to hurt you!" },
+            talk_cat_amigos: { es: "¿No podemos ser amigos? 🥺", en: "Can't we just be friends? 🥺" },
+            talk_cat_perdona: { es: "Lo siento si te ignoré... 😔", en: "Sorry if I ignored you... 😔" },
+            // Respuestas de Chococat
+            catr_nosigo: { es: "...DATOS INSUFICIENTES. Seguiré monitoreando tu posición.", en: "...INSUFFICIENT DATA. I will continue monitoring your position." },
+            catr_eres_lindo: { es: "Mi procesador registra una anomalía... ¿por qué se aceleran mis circuitos? 🐱", en: "My processor detects an anomaly... why are my circuits accelerating? 🐱" },
+            catr_calmate: { es: "LA CALMA ES INEFICIENTE. DEBO TENERTE CERCA. ¡ACERCÁNDOME!", en: "CALM IS INEFFICIENT. I MUST KEEP YOU CLOSE. APPROACHING!" },
+            catr_amigos: { es: "Amigos... sí. Eso significa que no puedes irte. Nunca. 🐱", en: "Friends... yes. That means you can't leave. Ever. 🐱" },
+            catr_perdona: { es: "...Ignorarme es inaceptable. Pero... acepto la disculpa. Por esta vez. 🐾", en: "...Ignoring me is unacceptable. But... I accept the apology. This once. 🐾" },
         };
 
         function showDialogue(key, type = 'system-speak') {
@@ -742,8 +880,6 @@
         });
         world.addBody(playerBody);
 
-        let keysCollected = 0;
-        let totalKeys = 3; 
         let isAbducted = false;
         let isSleeping = false; 
         let bedBroken = false;
@@ -838,9 +974,48 @@
         floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
         world.addBody(floorBody);
 
+        // --- MUROS DE CONTENCIÓN DEL MAPA ---
+        function createBoundaryWall(x, y, z, width, height, depth, color = 0x1a0a2e) {
+            const geo = new THREE.BoxGeometry(width, height, depth);
+            const mat = new THREE.MeshStandardMaterial({ 
+                color: color, 
+                emissive: new THREE.Color(0xff69b4).multiplyScalar(0.03),
+                roughness: 0.9, metalness: 0.1
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            if(!isMobile) { mesh.castShadow = true; mesh.receiveShadow = true; }
+            scene.add(mesh);
+            walls.push(mesh);
+
+            // Decoración: línea de luz neón en el borde del muro
+            const edgeGeo = new THREE.BoxGeometry(width + 0.1, 0.3, depth + 0.1);
+            const edgeMat = new THREE.MeshStandardMaterial({ color: 0xff69b4, emissive: 0xff69b4, emissiveIntensity: 0.8 });
+            const edgeMesh = new THREE.Mesh(edgeGeo, edgeMat);
+            edgeMesh.position.set(x, y + height/2, z);
+            scene.add(edgeMesh);
+
+            const body = new CANNON.Body({ 
+                mass: 0, 
+                shape: new CANNON.Box(new CANNON.Vec3(width/2, height/2, depth/2)),
+                material: slipMat 
+            });
+            body.position.set(x, y, z);
+            world.addBody(body);
+        }
+
         const walls = [];
         const boxGeo = new THREE.BoxGeometry(4, 6, 4);
         const boxMat = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.9, metalness: 0.1 });
+
+        // Muros de contención — se crean aquí donde walls ya está declarado
+        const WALL_H = 30;
+        const WALL_THICK = 8;
+        const HALF = MAP_SIZE / 2;
+        createBoundaryWall(0, WALL_H/2, HALF + WALL_THICK/2, MAP_SIZE + WALL_THICK*2, WALL_H, WALL_THICK, 0x0d0520);
+        createBoundaryWall(0, WALL_H/2, -HALF - WALL_THICK/2, MAP_SIZE + WALL_THICK*2, WALL_H, WALL_THICK, 0x0d0520);
+        createBoundaryWall(HALF + WALL_THICK/2, WALL_H/2, 0, WALL_THICK, WALL_H, MAP_SIZE, 0x100520);
+        createBoundaryWall(-HALF - WALL_THICK/2, WALL_H/2, 0, WALL_THICK, WALL_H, MAP_SIZE, 0x100520);
         
         // Optimización: Menos paredes en celulares
         const numWalls = isMobile ? 120 : 300;
@@ -965,28 +1140,6 @@
         const bedBody = new CANNON.Body({ mass: 0, shape: new CANNON.Box(new CANNON.Vec3(3, 1, 4)) });
         bedBody.position.copy(bedMesh.position);
         world.addBody(bedBody);
-
-        // LLAVES
-        const keyItems = [];
-        const keyGeo = new THREE.TorusKnotGeometry(0.5, 0.2, 64, 8);
-        const keyMat = new THREE.MeshStandardMaterial({ color: 0xffd700, emissive: 0xaa4400 });
-        function spawnKeys() {
-            keyItems.forEach(k => scene.remove(k)); keyItems.length = 0;
-            for(let i=0; i<totalKeys; i++) {
-                let kx = (Math.random() - 0.5) * (MAP_SIZE - 40); 
-                let kz = (Math.random() - 0.5) * (MAP_SIZE - 40);
-                const onSecondFloor = Math.random() > 0.7;
-                let ky = 1.5;
-                if (onSecondFloor) {
-                    if (Math.random() > 0.5) { kx = 60 + (Math.random()-0.5)*30; kz = 60 + (Math.random()-0.5)*30; ky = 9.5; }
-                    else { kx = -60 + (Math.random()-0.5)*30; kz = -60 + (Math.random()-0.5)*30; ky = 9.5; }
-                }
-                const key = new THREE.Mesh(keyGeo, keyMat); key.position.set(kx, ky, kz);
-                scene.add(key); keyItems.push(key);
-                const kl = new THREE.PointLight(0xffaa00, 1, 10); kl.position.copy(key.position); scene.add(kl);
-            }
-        }
-        function respawnKeys() { spawnKeys(); }
 
         // COMIDA
         const foodItems = [];
@@ -1193,6 +1346,17 @@
         // IA CINNAMOROLL
         const CI_STATE = { WANDER: 0, APPROACH: 1, COOLDOWN: 2, FOLLOW: 3 };
         let cinnamorollState = CI_STATE.WANDER; let cinnamorollTarget = new THREE.Vector3(); let cinnamorollCooldown = 0;
+        
+        // Nuevas mecánicas de Cinnamoroll
+        let cinnamorollHit = false;
+        let cinnamorollFallen = false;
+        let gameOverTimer = 0;
+        let playerCaughtByC = false;
+        let caughtTimer = 0;
+        const CAUGHT_DURATION = 15.0;
+        let wasRunningAway = false;
+        let distanceCheckTimer = 0;
+        let runAwayCount = 0;
 
         function evolve() {
             frustration++;
@@ -1203,7 +1367,98 @@
             notify("¡HA EVOLUCIONADO!", "danger");
         }
 
-        // Mejora IA: Feeler dinámico basado en la velocidad
+        // ============================================================
+        // OPTIMIZACIÓN: FRUSTUM CULLING MANUAL
+        // Desactiva actualizaciones costosas de objetos fuera de vista
+        // ============================================================
+        const _frustum = new THREE.Frustum();
+        const _projScreenMatrix = new THREE.Matrix4();
+        // Expande el frustum para que la IA siga activa un poco fuera de pantalla
+        const FRUSTUM_CULL_DIST = 120; // Distancia máxima para actualizar IA secundaria
+
+        function isInPlayerView(position, margin = 5) {
+            camera.updateMatrixWorld();
+            _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+            _frustum.setFromProjectionMatrix(_projScreenMatrix);
+            const sphere = new THREE.Sphere(position, margin);
+            return _frustum.intersectsSphere(sphere);
+        }
+
+        function isNearPlayer(position, maxDist = FRUSTUM_CULL_DIST) {
+            return camera.position.distanceTo(position) < maxDist;
+        }
+
+        // ============================================================
+        // IA MEJORADA: SISTEMA DE WAYPOINTS DE PATRULLA
+        // Chococat busca por zonas estratégicas del mapa en vez de al azar
+        // ============================================================
+        let patrolWaypoints = [];
+        let currentWaypointIndex = 0;
+        let patrolMemory = []; // Recuerda las últimas posiciones del jugador para inferir rutas
+
+        function buildPatrolWaypoints() {
+            // Crea waypoints cubriendo el mapa por sectores
+            const half = (MAP_SIZE / 2) - 20;
+            const step = half / 2;
+            patrolWaypoints = [];
+            for (let x = -half; x <= half; x += step) {
+                for (let z = FORBIDDEN_Z + 20; z <= EXIT_Z - 20; z += step) {
+                    patrolWaypoints.push(new THREE.Vector3(x, 1, z));
+                }
+            }
+            // Mezclar para que no sea siempre el mismo orden
+            for (let i = patrolWaypoints.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [patrolWaypoints[i], patrolWaypoints[j]] = [patrolWaypoints[j], patrolWaypoints[i]];
+            }
+        }
+
+        function getNextPatrolPoint(catPos) {
+            if (patrolWaypoints.length === 0) buildPatrolWaypoints();
+            // Avanza al siguiente waypoint que no esté bloqueado por paredes
+            for (let i = 0; i < patrolWaypoints.length; i++) {
+                const wp = patrolWaypoints[(currentWaypointIndex + i) % patrolWaypoints.length];
+                moveRaycaster.set(catPos, wp.clone().sub(catPos).normalize());
+                const hits = moveRaycaster.intersectObjects(walls);
+                const dist = catPos.distanceTo(wp);
+                if (hits.length === 0 || hits[0].distance >= dist) {
+                    currentWaypointIndex = (currentWaypointIndex + i + 1) % patrolWaypoints.length;
+                    return wp;
+                }
+            }
+            currentWaypointIndex = (currentWaypointIndex + 1) % patrolWaypoints.length;
+            return patrolWaypoints[currentWaypointIndex];
+        }
+
+        // Actualiza la memoria de posiciones del jugador (inferencia de ruta)
+        let patrolMemoryTimer = 0;
+        function updatePatrolMemory(playerPos) {
+            patrolMemoryTimer += 1;
+            if (patrolMemoryTimer % 180 === 0) { // Cada ~3 segundos a 60fps
+                patrolMemory.push(playerPos.clone());
+                if (patrolMemory.length > 5) patrolMemory.shift();
+            }
+        }
+
+        // Devuelve la mejor posición de búsqueda basada en la memoria de movimiento del jugador
+        function getPredictedSearchPos(catPos) {
+            if (patrolMemory.length < 2) return getNextPatrolPoint(catPos);
+            // Calcula tendencia de movimiento del jugador
+            const oldest = patrolMemory[0];
+            const newest = patrolMemory[patrolMemory.length - 1];
+            const trend = new THREE.Vector3().subVectors(newest, oldest).normalize();
+            // Predice dónde irá el jugador y manda a Chococat ahí
+            const predicted = newest.clone().add(trend.multiplyScalar(30));
+            predicted.clamp(
+                new THREE.Vector3(-MAP_SIZE/2 + 20, 1, FORBIDDEN_Z + 20),
+                new THREE.Vector3(MAP_SIZE/2 - 20, 1, EXIT_Z - 20)
+            );
+            return predicted;
+        }
+
+        // ============================================================
+        // MOVIMIENTO INTELIGENTE CON MÚLTIPLES FEELERS
+        // ============================================================
         function smartMoveBody(body, target, speed, scale = 1.0) {
             const pos = body.position;
             const pos3 = new THREE.Vector3(pos.x, pos.y, pos.z);
@@ -1214,30 +1469,29 @@
             }
             dir.normalize();
 
-            // Feeler (sensor de colisión) crece si van muy rápido
-            const feelerLen = (6 * scale) + (speed * 0.15); 
+            // Feeler dinámico: crece con velocidad y tamaño
+            const feelerLen = (6 * scale) + (speed * 0.2);
             moveRaycaster.set(pos3, dir);
             let hits = moveRaycaster.intersectObjects(walls);
 
             if (hits.length > 0 && hits[0].distance < feelerLen) {
-                let dirRight = dir.clone().applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI/3);
-                moveRaycaster.set(pos3, dirRight);
-                let hitsRight = moveRaycaster.intersectObjects(walls);
-                
-                let dirLeft = dir.clone().applyAxisAngle(new THREE.Vector3(0,1,0), -Math.PI/3);
-                moveRaycaster.set(pos3, dirLeft);
-                let hitsLeft = moveRaycaster.intersectObjects(walls);
+                // Prueba 5 ángulos para encontrar el mejor camino libre
+                const angles = [Math.PI/4, -Math.PI/4, Math.PI/2, -Math.PI/2, Math.PI * 0.7];
+                let bestDir = null;
+                let bestDist = -1;
 
-                let rightDist = hitsRight.length > 0 ? hitsRight[0].distance : feelerLen;
-                let leftDist = hitsLeft.length > 0 ? hitsLeft[0].distance : feelerLen;
-
-                if (rightDist > leftDist) {
-                    dir = dirRight; 
-                } else if (leftDist > rightDist) {
-                    dir = dirLeft; 
-                } else {
-                    dir.applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI/1.5); 
+                for (const angle of angles) {
+                    const testDir = dir.clone().applyAxisAngle(new THREE.Vector3(0,1,0), angle);
+                    moveRaycaster.set(pos3, testDir);
+                    const testHits = moveRaycaster.intersectObjects(walls);
+                    const dist = testHits.length > 0 ? testHits[0].distance : feelerLen * 3;
+                    if (dist > bestDist) {
+                        bestDist = dist;
+                        bestDir = testDir;
+                    }
                 }
+                if (bestDir) dir = bestDir;
+                else dir.applyAxisAngle(new THREE.Vector3(0,1,0), Math.PI / 1.5);
             }
 
             body.velocity.x = dir.x * speed;
@@ -1262,6 +1516,293 @@
             if(!tryEat()) trySleep();
         }
 
+        // --- SISTEMA DE HABLAR CON PERSONAJES ---
+        let talkMenuOpen = false;
+        let talkSelectedChar = null;
+
+        const talkPhrases = {
+            kuromi: [
+                { label: "¡No me sigas! 😤", playerKey: 'talk_k_nosigo', responseKey: 'kr_nosigo', responseType: 'kuromi-speak', effect: 'kuromi_flee' },
+                { label: "¡Eres linda! 🖤", playerKey: 'talk_k_eres_linda', responseKey: 'kr_eres_linda', responseType: 'kuromi-speak', effect: 'kuromi_shy' },
+                { label: "¡Ayúdame! 🙏", playerKey: 'talk_k_ayuda', responseKey: 'kr_ayuda', responseType: 'kuromi-speak', effect: 'kuromi_help' },
+                { label: "Me molestas 😤", playerKey: 'talk_k_molesta', responseKey: 'kr_molesta', responseType: 'kuromi-speak', effect: null },
+                { label: "¿Amigos? 🖤", playerKey: 'talk_k_amigos', responseKey: 'kr_amigos', responseType: 'kuromi-speak', effect: 'kuromi_friend' },
+            ],
+            melody: [
+                { label: "No me sigas 🙏", playerKey: 'talk_m_nosigo', responseKey: 'mr_nosigo', responseType: 'melody-speak', effect: 'melody_stop' },
+                { label: "¡Eres bonita! 🌸", playerKey: 'talk_m_eres_linda', responseKey: 'mr_eres_linda', responseType: 'melody-speak', effect: 'melody_blush' },
+                { label: "¡Necesito ayuda! 😰", playerKey: 'talk_m_ayuda', responseKey: 'mr_ayuda', responseType: 'melody-speak', effect: 'melody_shield' },
+                { label: "Tengo miedo 😱", playerKey: 'talk_m_miedo', responseKey: 'mr_miedo', responseType: 'melody-speak', effect: 'melody_comfort' },
+                { label: "¡Gracias! 💖", playerKey: 'talk_m_gracias', responseKey: 'mr_gracias', responseType: 'melody-speak', effect: null },
+            ],
+            cinnamoroll: [
+                { label: "No me sigas 😅", playerKey: 'talk_c_nosigo', responseKey: null, responseType: 'cinnamoroll-speak', effect: 'ci_stop' },
+                { label: "¡Eres esponjoso! ☁️", playerKey: 'talk_c_eres_lindo', responseKey: null, responseType: 'cinnamoroll-speak', effect: 'ci_happy' },
+                { label: "¡Vuela lejos! ☁️", playerKey: 'talk_c_vuela', responseKey: null, responseType: 'cinnamoroll-speak', effect: 'ci_fly' },
+                { label: "¡Abrazo de nube! ☁️", playerKey: 'talk_c_abrazos', responseKey: null, responseType: 'cinnamoroll-speak', effect: 'ci_hug' },
+                { label: "¿Distrae a Choco?", playerKey: 'talk_c_choco', responseKey: null, responseType: 'cinnamoroll-speak', effect: 'ci_distract' },
+            ],
+            chococat: [
+                { label: "¡No me sigas! 😰", playerKey: 'talk_cat_nosigo', responseKey: 'catr_nosigo', responseType: 'chococat-speak', effect: 'cat_nosigo' },
+                { label: "¡Eres lindo! 🐱", playerKey: 'talk_cat_eres_lindo', responseKey: 'catr_eres_lindo', responseType: 'chococat-speak', effect: 'cat_lindo' },
+                { label: "¡Cálmate! 🙏", playerKey: 'talk_cat_calmate', responseKey: 'catr_calmate', responseType: 'rage-speak', effect: 'cat_calmate' },
+                { label: "¿Ser amigos? 🥺", playerKey: 'talk_cat_amigos', responseKey: 'catr_amigos', responseType: 'love-speak', effect: 'cat_amigos' },
+                { label: "Lo siento 😔", playerKey: 'talk_cat_perdona', responseKey: 'catr_perdona', responseType: 'chococat-speak', effect: 'cat_perdona' },
+            ]
+        };
+
+        const cinnamorollResponses = {
+            ci_stop:    { es: "Oh... ¿no quieres que te acompañe? 🥺 ¡Pero es que me gustas mucho!", en: "Oh... you don't want me around? 🥺 But I like you so much!" },
+            ci_happy:   { es: "¡Wheee! ¡Gracias! ¡Tú también eres muy especial! ☁️✨", en: "Wheee! Thank you! You're very special too! ☁️✨" },
+            ci_fly:     { es: "¡Está bien! ¡Volveré pronto! ¡No te pierdas! ☁️", en: "Okay! I'll be back soon! Don't get lost! ☁️" },
+            ci_hug:     { es: "¡Wheee! ¡Abrazoooo! ¡Toma impulso también! ☁️💙", en: "Wheee! Huuug! Take a boost too! ☁️💙" },
+            ci_distract:{ es: "¡Voy! ¡Voy! ¡Seré súper rápido! ☁️💨", en: "I'm going! I'm going! I'll be super fast! ☁️💨" },
+        };
+
+        window.openTalkMenu = () => {
+            if(!gameStarted || isDead) return;
+            talkMenuOpen = !talkMenuOpen;
+            const menu = document.getElementById('talk-menu');
+            if(talkMenuOpen) {
+                menu.style.display = 'block';
+                if(!isMobile && controls.isLocked) controls.unlock();
+                talkSelectedChar = null;
+                document.getElementById('talk-phrases').innerHTML = '<p style="color:#888;font-size:12px;font-family:monospace;text-align:center;">← Selecciona un personaje →</p>';
+                document.querySelectorAll('.talk-char-btn').forEach(b => b.className = 'talk-char-btn');
+            } else {
+                closeTalkMenu();
+            }
+        };
+
+        window.closeTalkMenu = () => {
+            talkMenuOpen = false;
+            document.getElementById('talk-menu').style.display = 'none';
+            if(!isMobile && gameStarted && !isDead) controls.lock();
+        };
+
+        window.selectTalkChar = (char) => {
+            talkSelectedChar = char;
+            document.querySelectorAll('.talk-char-btn').forEach(b => b.className = 'talk-char-btn');
+            const activeClass = char === 'kuromi' ? 'active-kuromi' : char === 'melody' ? 'active-melody' : char === 'cinnamoroll' ? 'active-cinnamoroll' : 'active-chococat';
+            document.getElementById('talk-' + char).className = 'talk-char-btn ' + activeClass;
+            
+            const phrases = talkPhrases[char];
+            const container = document.getElementById('talk-phrases');
+            container.innerHTML = '';
+            phrases.forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = 'talk-phrase-btn';
+                btn.innerText = p.label;
+                btn.onclick = () => sayPhrase(char, p);
+                container.appendChild(btn);
+            });
+        };
+
+        window.sayPhrase = (char, phrase) => {
+            // Mostrar lo que dice el jugador brevemente
+            const playerLine = dialogues[phrase.playerKey] ? dialogues[phrase.playerKey][currentLang] : phrase.playerKey;
+            showDialogue(phrase.playerKey, 'system-speak');
+            
+            // Respuesta del personaje tras un momento
+            setTimeout(() => {
+                let responseText = null;
+                if(phrase.responseKey && dialogues[phrase.responseKey]) {
+                    responseText = dialogues[phrase.responseKey][currentLang];
+                } else if(char === 'cinnamoroll' && phrase.effect && cinnamorollResponses[phrase.effect]) {
+                    responseText = cinnamorollResponses[phrase.effect][currentLang];
+                }
+
+                if(responseText) {
+                    const box = document.getElementById('dialogue-box');
+                    box.innerText = responseText;
+                    box.className = '';
+                    box.classList.add(phrase.responseType);
+                    box.style.display = 'block';
+                    setTimeout(() => { box.style.display = 'none'; }, 3500);
+                }
+
+                // Aplicar el efecto de la frase
+                applyTalkEffect(char, phrase.effect);
+            }, 1200);
+
+            closeTalkMenu();
+        };
+
+        function applyTalkEffect(char, effect) {
+            if(!effect) return;
+            switch(effect) {
+                case 'kuromi_flee':
+                    kuromiState = K_STATE.FLEE;
+                    kuromiDistractCooldown = 10;
+                    notify("Kuromi se aleja... por ahora 😈", "purple");
+                    break;
+                case 'kuromi_shy':
+                    // Kuromi se detiene y se ruboriza (pausa breve)
+                    kuromiState = K_STATE.PATROL;
+                    kuromiBody.velocity.set(0,0,0);
+                    notify("¡Kuromi se sonrojó! 🖤", "purple");
+                    setTimeout(() => { kuromiState = K_STATE.PATROL; }, 4000);
+                    break;
+                case 'kuromi_help':
+                    // Kuromi distrae a Chococat si está persiguiendo
+                    if(currentState === AI_STATE.CHASE || currentState === AI_STATE.RAGE) {
+                        kuromiState = K_STATE.DISTRACT_CHOCOCAT;
+                        notify("¡Kuromi va a distraer a Chococat!", "success");
+                    } else {
+                        notify("Kuromi dice: '¡No hay nada que hacer ahora!'", "purple");
+                    }
+                    break;
+                case 'kuromi_friend':
+                    notify("¡Kuromi ahora es un poco tu amiga! 🖤", "purple");
+                    // Pequeño cooldown para que no te interrogue
+                    kuromiDistractCooldown = 15;
+                    kuromiState = K_STATE.PATROL;
+                    break;
+                case 'melody_stop':
+                    melodyState = M_STATE.WANDER;
+                    melodyCooldown = 20;
+                    notify("🌸 My Melody respeta tu espacio por ahora", "pink");
+                    break;
+                case 'melody_blush':
+                    // Melody se queda girando feliz un momento
+                    notify("¡My Melody se alegró mucho! 🌸✨", "success");
+                    melodyState = M_STATE.WANDER;
+                    // Anima con diálogos de alegría
+                    setTimeout(() => showDialogue('m_humming', 'melody-speak'), 1500);
+                    break;
+                case 'melody_shield':
+                    // Da el escudo inmediatamente si tiene cooldown listo
+                    if(melodyCooldown <= 0) {
+                        immuneTimer = 12.0;
+                        melodyCooldown = 60.0;
+                        notify("🌸 ¡My Melody te dio su escudo protector especial!", "success");
+                    } else {
+                        notify("🌸 My Melody dice: '¡Pronto podré ayudarte más!'", "pink");
+                    }
+                    break;
+                case 'melody_comfort':
+                    // Melody se acerca y te acompaña
+                    melodyState = M_STATE.FOLLOW;
+                    notify("🌸 ¡My Melody te acompañará un rato!", "success");
+                    break;
+                case 'ci_stop':
+                    if(isCinnamorollFollowing) {
+                        isCinnamorollFollowing = false;
+                        cinnamorollState = CI_STATE.WANDER;
+                        cinnamorollCooldown = 20;
+                        notify("☁️ Cinnamoroll se fue a volar... con carita triste", "info");
+                    } else {
+                        cinnamorollCooldown = 25;
+                        cinnamorollState = CI_STATE.WANDER;
+                        notify("☁️ Cinnamoroll se alejará por un rato 🥺", "info");
+                    }
+                    break;
+                case 'ci_happy':
+                    // Cinnamoroll hace una vuelta de alegría y da un leve boost
+                    cinnamorollBoostTimer = 3.0;
+                    notify("☁️ ¡Cinnamoroll está tan feliz que te dio un mini boost! ✨", "success");
+                    break;
+                case 'ci_fly':
+                    isCinnamorollFollowing = false;
+                    cinnamorollState = CI_STATE.WANDER;
+                    cinnamorollCooldown = 30;
+                    notify("☁️ Cinnamoroll voló lejos a explorar 🌤️", "info");
+                    break;
+                case 'ci_hug':
+                    // Cinnamoroll se acerca y da boost completo
+                    cinnamorollState = CI_STATE.APPROACH;
+                    cinnamorollBoostTimer = 6.0;
+                    notify("☁️ ¡Abrazo de nube activado! Boost máximo ✨", "success");
+                    break;
+                case 'ci_distract':
+                    // Cinnamoroll vuela hacia Chococat
+                    const catP = new THREE.Vector3(chococatBody.position.x, chococatBody.position.y, chococatBody.position.z);
+                    cinnamorollBody.velocity.set(
+                        (catP.x - cinnamorollBody.position.x) * 0.5,
+                        5,
+                        (catP.z - cinnamorollBody.position.z) * 0.5
+                    );
+                    notify("☁️ ¡Cinnamoroll vuela a distraer a Chococat!", "warning");
+                    if(currentState === AI_STATE.CHASE || currentState === AI_STATE.SUSPICION) {
+                        currentState = AI_STATE.STUNNED;
+                        stunTimer = 2.5;
+                        setTimeout(() => notify("☁️ ¡Chococat se distrajo con Cinnamoroll!", "success"), 1500);
+                    }
+                    break;
+                // --- EFECTOS DE CHOCOCAT ---
+                case 'cat_nosigo':
+                    // Chococat retrocede un poco confundido, breve pausa
+                    if(currentState !== AI_STATE.RAGE) {
+                        currentState = AI_STATE.STUNNED;
+                        stunTimer = 1.5;
+                        loneliness = Math.max(0, loneliness - 5);
+                        notify("Chococat procesó tu mensaje... brevemente 🐱", "info");
+                    } else {
+                        notify("¡Chococat está demasiado furioso para escucharte!", "danger");
+                    }
+                    break;
+                case 'cat_lindo':
+                    // Reduce la soledad y si estaba buscando, baja el estado
+                    loneliness = Math.max(0, loneliness - 10);
+                    gazeTime = Math.max(0, gazeTime - 2);
+                    if(currentState === AI_STATE.CHASE) {
+                        currentState = AI_STATE.SUSPICION;
+                        notify("¡El cumplido confundió sus circuitos! 🐱✨", "success");
+                    } else {
+                        notify("Los sensores de Chococat detectaron... emoción 🐱", "info");
+                    }
+                    break;
+                case 'cat_calmate':
+                    // Si está en rage, tiene pequeña probabilidad de bajar a chase
+                    if(currentState === AI_STATE.RAGE) {
+                        if(Math.random() < 0.3) {
+                            currentState = AI_STATE.CHASE;
+                            notify("Chococat bajó levemente la guardia... ¡corre!", "warning");
+                        } else {
+                            notify("¡Chococat no se calmó! ¡La furia persiste!", "danger");
+                            // Se acerca más rápido por un momento
+                            baseSpeed = Math.min(baseSpeed * 1.2, 20);
+                        }
+                    } else {
+                        currentState = AI_STATE.STUNNED;
+                        stunTimer = 2.0;
+                        notify("Chococat procesó la solicitud de calma... 🐱", "info");
+                    }
+                    break;
+                case 'cat_amigos':
+                    // Activa modo amor/love_chase por un momento, pero baja la agresividad
+                    loneliness = 0;
+                    gazeTime = 0;
+                    if(currentState !== AI_STATE.RAGE) {
+                        currentState = AI_STATE.LOVE_CHASE;
+                        document.getElementById('love-overlay').style.display = 'block';
+                        setTimeout(() => {
+                            if(currentState === AI_STATE.LOVE_CHASE) {
+                                currentState = AI_STATE.SEARCH;
+                                document.getElementById('love-overlay').style.display = 'none';
+                            }
+                        }, 8000);
+                        notify("¡Chococat activó MODO AMIGOS... que es igual a MODO AMOR! 💗", "danger");
+                    } else {
+                        notify("¡En modo furia no entiende de amistades!", "danger");
+                    }
+                    break;
+                case 'cat_perdona':
+                    // Resetea la soledad y baja agresividad
+                    loneliness = Math.max(0, loneliness - 15);
+                    flags.lonelinessLow = false;
+                    flags.lonelinessHigh = false;
+                    document.getElementById('ignore-vignette').style.display = 'none';
+                    if(currentState === AI_STATE.RAGE && loneliness < 5) {
+                        currentState = AI_STATE.SEARCH;
+                        notify("La disculpa redujo su furia... un poco 🐾", "success");
+                    } else {
+                        notify("Chococat aceptó la disculpa. Soledad reducida 🐾", "info");
+                    }
+                    break;
+            }
+        }
+
         // --- SISTEMA DE COMPAÑERO (CINNAMOROLL) ---
         window.toggleCinnamorollFollow = () => {
             isCinnamorollFollowing = !isCinnamorollFollowing;
@@ -1282,6 +1823,57 @@
         // --- UPDATE CINNAMOROLL ---
         function updateCinnamoroll(dt, playerPos) {
             if(!cinnamorollMesh) return;
+            
+            // Si Cinnamoroll está caído, no hace nada
+            if(cinnamorollFallen) {
+                cinnamorollBody.velocity.set(0, 0, 0);
+                return;
+            }
+            
+            // Si el jugador está atrapado
+            if(playerCaughtByC) {
+                caughtTimer += dt;
+                
+                // Cinnamoroll se queda cerca del jugador
+                const ciPos = cinnamorollBody.position;
+                const ciVec = new THREE.Vector3(ciPos.x, ciPos.y, ciPos.z);
+                const targetPos = playerPos.clone();
+                targetPos.y += 1.5;
+                
+                const dir = new THREE.Vector3().subVectors(targetPos, ciVec);
+                if(dir.length() > 2) {
+                    dir.normalize();
+                    cinnamorollBody.velocity.set(dir.x * 5, dir.y * 5, dir.z * 5);
+                } else {
+                    cinnamorollBody.velocity.set(0, 0, 0);
+                }
+                
+                cinnamorollMesh.position.copy(ciVec);
+                cinnamorollMesh.position.y += Math.sin(Date.now() * 0.003) * 0.4;
+                cinnamorollMesh.lookAt(playerPos);
+                
+                document.getElementById('cinnamoroll-status').innerText = "☁️ CINNAMOROLL: ¡NO TE VAYAS!";
+                
+                // Mostrar diálogos cada 5 segundos
+                if(Math.floor(caughtTimer) !== Math.floor(caughtTimer - dt) && Math.floor(caughtTimer) % 5 === 0) {
+                    showDialogue('ci_catch', 'cinnamoroll-speak');
+                }
+                
+                // Liberar después de 15 segundos
+                if(caughtTimer >= CAUGHT_DURATION) {
+                    playerCaughtByC = false;
+                    caughtTimer = 0;
+                    cinnamorollState = CI_STATE.WANDER;
+                    notify("Cinnamoroll te soltó", "info");
+                    showDialogue('ci_follow_stop', 'cinnamoroll-speak');
+                    
+                    // Restaurar el objetivo de llaves
+                    document.getElementById('objective').innerText = `LLAVES: ${keysCollected}/${totalKeys} 🗝️`;
+                }
+                
+                return;
+            }
+            
             if(cinnamorollBoostTimer > 0) cinnamorollBoostTimer -= dt;
             if(cinnamorollCooldown > 0) cinnamorollCooldown -= dt;
 
@@ -1293,6 +1885,33 @@
             cinnamorollMesh.position.y += Math.sin(Date.now() * 0.003) * 0.4;
 
             const distToPlayer = ciVec.distanceTo(playerPos);
+            
+            // DETECCIÓN DE HUIDA
+            distanceCheckTimer += dt;
+            if(distanceCheckTimer >= 0.5) { // Cada medio segundo
+                distanceCheckTimer = 0;
+                
+                // Si estás cerca de Cinnamoroll y te estás alejando
+                if(distToPlayer > 8 && distToPlayer < 25 && cinnamorollState === CI_STATE.APPROACH) {
+                    if(!wasRunningAway) {
+                        wasRunningAway = true;
+                        runAwayCount = 0;
+                    } else {
+                        runAwayCount = (runAwayCount || 0) + 1;
+                        // Solo atrapa después de 4 comprobaciones consecutivas huyendo (~2 segundos)
+                        if(runAwayCount >= 4 && cinnamorollState !== CI_STATE.COOLDOWN && !playerCaughtByC) {
+                            playerCaughtByC = true;
+                            caughtTimer = 0;
+                            runAwayCount = 0;
+                            notify("¡CINNAMOROLL TE ATRAPÓ!", "warning");
+                            showDialogue('ci_catch', 'cinnamoroll-speak');
+                        }
+                    }
+                } else {
+                    wasRunningAway = false;
+                    runAwayCount = 0;
+                }
+            }
 
             if (cinnamorollState !== CI_STATE.COOLDOWN && cinnamorollState !== CI_STATE.FOLLOW && distToPlayer < 40 && cinnamorollCooldown <= 0) {
                 cinnamorollState = CI_STATE.APPROACH;
@@ -1723,16 +2342,115 @@
             const melodyPos = melodyBody ? new THREE.Vector3(melodyBody.position.x, melodyBody.position.y, melodyBody.position.z) : new THREE.Vector3(0, -100, 0);
             const kuromiPos = kuromiBody ? new THREE.Vector3(kuromiBody.position.x, kuromiBody.position.y, kuromiBody.position.z) : new THREE.Vector3(0, -100, 0);
             
+            // LÓGICA DE CINNAMOROLL CAÍDO
+            if(cinnamorollFallen && cinnamorollMesh) {
+                gameOverTimer -= dt;
+                
+                // Hacer que Cinnamoroll se mantenga en el suelo
+                const ciPos = new THREE.Vector3(cinnamorollBody.position.x, cinnamorollBody.position.y, cinnamorollBody.position.z);
+                cinnamorollMesh.position.copy(ciPos);
+                
+                // Si toca el suelo, quedarse ahí
+                if(cinnamorollBody.position.y <= 1) {
+                    cinnamorollBody.position.y = 1;
+                    cinnamorollBody.velocity.set(0, 0, 0);
+                    cinnamorollBody.angularVelocity.set(0, 0, 0);
+                    
+                    // Rotar para que parezca inconsciente
+                    cinnamorollMesh.rotation.z = Math.PI / 2;
+                }
+                
+                // TODOS LOS PERSONAJES VAN A CINNAMOROLL
+                const cinnaPos = new THREE.Vector3(cinnamorollBody.position.x, cinnamorollBody.position.y, cinnamorollBody.position.z);
+                
+                // Kuromi va a Cinnamoroll
+                if(kuromiBody && kuromiMesh) {
+                    const dirToC = new THREE.Vector3().subVectors(cinnaPos, kuromiPos);
+                    const distToC = dirToC.length();
+                    
+                    if(distToC > 3) {
+                        dirToC.normalize();
+                        kuromiBody.velocity.set(dirToC.x * 6, 0, dirToC.z * 6);
+                        kuromiMesh.lookAt(cinnaPos.x, kuromiMesh.position.y, cinnaPos.z);
+                    } else {
+                        kuromiBody.velocity.set(0, 0, 0);
+                        kuromiMesh.lookAt(cinnaPos.x, kuromiMesh.position.y, cinnaPos.z);
+                        
+                        // Diálogo de preocupación
+                        if(Math.floor(gameOverTimer) % 8 === 0 && Math.floor(gameOverTimer) !== Math.floor(gameOverTimer + dt)) {
+                            showDialogue('k_worried', 'kuromi-speak');
+                        }
+                    }
+                }
+                
+                // My Melody va a Cinnamoroll
+                if(melodyBody && melodyMesh) {
+                    const dirToC = new THREE.Vector3().subVectors(cinnaPos, melodyPos);
+                    const distToC = dirToC.length();
+                    
+                    if(distToC > 3) {
+                        dirToC.normalize();
+                        melodyBody.velocity.set(dirToC.x * 5, 0, dirToC.z * 5);
+                        melodyMesh.lookAt(cinnaPos.x, melodyMesh.position.y, cinnaPos.z);
+                    } else {
+                        melodyBody.velocity.set(0, 0, 0);
+                        melodyMesh.lookAt(cinnaPos.x, melodyMesh.position.y, cinnaPos.z);
+                        
+                        // Diálogo de preocupación
+                        if(Math.floor(gameOverTimer) % 10 === 0 && Math.floor(gameOverTimer) !== Math.floor(gameOverTimer + dt)) {
+                            showDialogue('m_worried', 'melody-speak');
+                        }
+                    }
+                }
+                
+                // Chococat va a Cinnamoroll
+                const dirToC = new THREE.Vector3().subVectors(cinnaPos, catPosThree);
+                const distToC = dirToC.length();
+                
+                if(distToC > 3) {
+                    dirToC.normalize();
+                    chococatBody.velocity.set(dirToC.x * 5, 0, dirToC.z * 5);
+                    chococatMesh.lookAt(cinnaPos.x, chococatMesh.position.y, cinnaPos.z);
+                } else {
+                    chococatBody.velocity.set(0, 0, 0);
+                    chococatMesh.lookAt(cinnaPos.x, chococatMesh.position.y, cinnaPos.z);
+                    
+                    // Diálogo de culpa
+                    if(Math.floor(gameOverTimer) % 12 === 0 && Math.floor(gameOverTimer) !== Math.floor(gameOverTimer + dt)) {
+                        showDialogue('cat_guilty', 'chococat-speak');
+                    }
+                }
+                
+                // Actualizar estado de Cinnamoroll
+                document.getElementById('cinnamoroll-status').innerText = `☁️ CINNAMOROLL: INCONSCIENTE... (${Math.ceil(gameOverTimer)}s)`;
+                
+                // Game Over después de 30 segundos
+                if(gameOverTimer <= 0) {
+                    triggerJumpscare("LE HICISTE DAÑO A CINNAMOROLL...");
+                    return;
+                }
+                
+                // No actualizar el resto de la IA normalmente
+                return;
+            }
+            
             raycaster.set(catPosThree, playerPos.clone().sub(catPosThree).normalize());
             const intersects = raycaster.intersectObjects([...walls]);
             const detectionRange = difficultySettings.detectionRadius * currentScale;
             let canSee = (distToPlayer < detectionRange && (intersects.length === 0 || intersects[0].distance > distToPlayer));
             if(invisibleMode) canSee = false; 
 
-            // Update de AIs Secundarios
-            updateMyMelody(dt, playerPos, kuromiPos, canSee);
-            updateKuromi(dt, playerPos, melodyPos, catPosThree);
-            updateCinnamoroll(dt, playerPos); // Actualizamos a Cinnamoroll
+            // Update de AIs Secundarios con culling de distancia
+            // Si un personaje está muy lejos Y fuera de vista, reducimos la frecuencia de actualización
+            const _melodyPos3 = melodyBody ? new THREE.Vector3(melodyBody.position.x, melodyBody.position.y, melodyBody.position.z) : null;
+            const _kuromiPos3 = kuromiBody ? new THREE.Vector3(kuromiBody.position.x, kuromiBody.position.y, kuromiBody.position.z) : null;
+            
+            const melodyNeedsFull = !_melodyPos3 || isNearPlayer(_melodyPos3, FRUSTUM_CULL_DIST);
+            const kuromiNeedsFull = !_kuromiPos3 || isNearPlayer(_kuromiPos3, FRUSTUM_CULL_DIST);
+
+            if (melodyNeedsFull) updateMyMelody(dt, playerPos, kuromiPos, canSee);
+            if (kuromiNeedsFull) updateKuromi(dt, playerPos, melodyPos, catPosThree);
+            updateCinnamoroll(dt, playerPos); // Cinnamoroll siempre activo (mecánica central)
 
             chococatMesh.position.copy(catPosThree); chococatMesh.position.y = chococatBody.position.y - 1;
             
@@ -1818,11 +2536,15 @@
             switch(currentState) {
                 case AI_STATE.SEARCH:
                     statusEl.innerText = "ESTADO: BUSCANDO ATENCIÓN"; statusEl.style.color = "lime";
-                    // Mejora IA: Búsqueda ligeramente más inteligente cerca de su zona actual o jugador perdido
-                    if(catPosThree.distanceTo(targetPosition) < 3) {
-                        const randomOffset = new THREE.Vector3((Math.random()-0.5)* 60, 0, (Math.random()-0.5)* 60);
-                        targetPosition.copy(catPosThree).add(randomOffset);
-                        targetPosition.clamp(new THREE.Vector3(-MAP_SIZE/2 + 20, 1, FORBIDDEN_Z), new THREE.Vector3(MAP_SIZE/2 - 20, 1, EXIT_Z - 10));
+                    // IA MEJORADA: Patrulla por waypoints estratégicos + infiere ruta del jugador
+                    updatePatrolMemory(playerPos);
+                    if(catPosThree.distanceTo(targetPosition) < 4 || targetPosition.lengthSq() === 0) {
+                        // Si tiene memoria de movimiento del jugador, predice su posición
+                        if (patrolMemory.length >= 2 && Math.random() < 0.5) {
+                            targetPosition.copy(getPredictedSearchPos(catPosThree));
+                        } else {
+                            targetPosition.copy(getNextPatrolPoint(catPosThree));
+                        }
                     }
                     smartMoveBody(chococatBody, targetPosition, currentSpeed, currentScale);
                     if(canSee) { currentState = AI_STATE.CHASE; showDialogue('found', 'chococat-speak'); notify("DETECTADO", "danger"); }
@@ -1831,11 +2553,18 @@
                     statusEl.innerText = "ESTADO: PERSECUCIÓN"; statusEl.style.color = "red";
                     
                     if(canSee) {
-                        const playerVel = new THREE.Vector3(playerBody.velocity.x, 0, playerBody.velocity.z); const pSpeed = playerVel.length();
-                        if(pSpeed > 2.0 && distToPlayer < 40) {
-                            const lookAhead = Math.min(2.5, distToPlayer / currentSpeed); 
-                            const predictedPos = playerPos.clone().add(playerVel.normalize().multiplyScalar(pSpeed * lookAhead));
-                            targetPosition.lerp(predictedPos, 0.7); 
+                        const playerVel = new THREE.Vector3(playerBody.velocity.x, 0, playerBody.velocity.z);
+                        const pSpd = playerVel.length();
+                        if(pSpd > 2.0 && distToPlayer < 40) {
+                            // IA MEJORADA: Intercepta calculando tiempo de llegada
+                            const timeToReach = distToPlayer / Math.max(currentSpeed * difficultySettings.speedMultiplier, 1);
+                            const lookAhead = Math.min(3.5, timeToReach * 0.8);
+                            const predictedPos = playerPos.clone().add(playerVel.normalize().multiplyScalar(pSpd * lookAhead));
+                            // Además, flanquea levemente hacia el lado del jugador
+                            const flankDir = new THREE.Vector3(-playerVel.z, 0, playerVel.x).normalize();
+                            const flankAmount = (frustration > 2) ? 2.0 : 0; // Solo flanquea si ha evolucionado
+                            predictedPos.add(flankDir.multiplyScalar(flankAmount));
+                            targetPosition.lerp(predictedPos, 0.75); 
                         } else { targetPosition.copy(playerPos); }
                         lastKnownPosition.copy(playerPos);
                         lostSightTimer = 0;
@@ -1911,12 +2640,23 @@
                     break;
                 case AI_STATE.INVESTIGATE_LAST_SEEN:
                     statusEl.innerText = "ESTADO: RASTREANDO..."; statusEl.style.color = "orange";
-                    smartMoveBody(chococatBody, lastKnownPosition, currentSpeed * 1.2, currentScale);
-                    if(catPosThree.distanceTo(lastKnownPosition) < 3) { 
-                        if(!canSee) { currentState = AI_STATE.SEARCH; notify("PERDIÓ EL RASTRO", "success"); }
-                        else { currentState = AI_STATE.CHASE; } 
+                    // IA MEJORADA: Usa la memoria de movimiento del jugador para predecir dónde fue
+                    {
+                        const searchTarget = patrolMemory.length >= 2 
+                            ? getPredictedSearchPos(catPosThree) 
+                            : lastKnownPosition;
+                        smartMoveBody(chococatBody, searchTarget, currentSpeed * 1.2, currentScale);
+                        if(catPosThree.distanceTo(searchTarget) < 3) { 
+                            if(!canSee) { 
+                                // Si no lo encontró, va al waypoint siguiente
+                                targetPosition.copy(getNextPatrolPoint(catPosThree));
+                                currentState = AI_STATE.SEARCH; 
+                                notify("PERDIÓ EL RASTRO", "success"); 
+                            }
+                            else { currentState = AI_STATE.CHASE; } 
+                        }
+                        if(canSee) currentState = isLoveMode ? AI_STATE.LOVE_CHASE : AI_STATE.CHASE;
                     }
-                    if(canSee) currentState = isLoveMode ? AI_STATE.LOVE_CHASE : AI_STATE.CHASE;
                     break;
                 case AI_STATE.SUSPICION:
                     statusEl.innerText = "ESTADO: INVESTIGANDO RUIDO"; statusEl.style.color = "yellow";
@@ -2033,6 +2773,7 @@
             if(e.code === 'KeyC') { tryEat(); }
             if(e.code === 'KeyG') { trySleep(); }
             if(e.code === 'KeyX') { toggleCinnamorollFollow(); }
+            if(e.code === 'KeyT') { openTalkMenu(); }
 
             if(difficultySettings.debug) {
                 if(e.code === 'Digit1') { currentState = AI_STATE.SEARCH; notify("DEBUG: ESTADO BÚSQUEDA", "info"); }
@@ -2128,6 +2869,7 @@
             document.getElementById('btn-throw').addEventListener('touchstart', (e) => { e.preventDefault(); spawnThrowable(true); });
             document.getElementById('btn-interact').addEventListener('touchstart', (e) => { e.preventDefault(); tryInteract(); });
             document.getElementById('btn-call').addEventListener('touchstart', (e) => { e.preventDefault(); toggleCinnamorollFollow(); });
+            document.getElementById('btn-talk').addEventListener('touchstart', (e) => { e.preventDefault(); openTalkMenu(); });
             
             const btnLight = document.getElementById('btn-light');
             btnLight.addEventListener('touchstart', (e) => { 
@@ -2166,6 +2908,41 @@
                     const distToBed = obj.mesh.position.distanceTo(bedMesh.position);
                     const distToKuromi = kuromiMesh ? obj.mesh.position.distanceTo(kuromiMesh.position) : 999;
                     const distToMelody = melodyMesh ? obj.mesh.position.distanceTo(melodyMesh.position) : 999;
+                    const distToCinnamoroll = cinnamorollMesh ? obj.mesh.position.distanceTo(cinnamorollMesh.position) : 999;
+                    
+                    // GOLPE A CINNAMOROLL
+                    if(distToCinnamoroll < 2.5 && !cinnamorollFallen && !cinnamorollHit) {
+                        cinnamorollHit = true;
+                        cinnamorollFallen = true;
+                        
+                        // Hacer que Cinnamoroll caiga al suelo
+                        cinnamorollBody.type = CANNON.Body.DYNAMIC;
+                        cinnamorollBody.mass = 5;
+                        cinnamorollBody.collisionFilterGroup = 1;
+                        cinnamorollBody.collisionFilterMask = 1;
+                        cinnamorollBody.velocity.set(0, 0, 0);
+                        
+                        // Aplicar gravedad para que caiga
+                        cinnamorollBody.position.y = cinnamorollMesh.position.y;
+                        
+                        notify("¡LE PEGASTE A CINNAMOROLL!", "danger");
+                        showDialogue('ci_hurt', 'cinnamoroll-speak');
+                        
+                        obj.time = 100;
+                        
+                        // Iniciar el timer de game over
+                        gameOverTimer = 30.0;
+                        
+                        // Hacer que todos los personajes vayan a Cinnamoroll
+                        setTimeout(() => {
+                            if(cinnamorollFallen) {
+                                showDialogue('ci_fall', 'cinnamoroll-speak');
+                            }
+                        }, 1500);
+                        
+                        continue;
+                    }
+                    
                     if(!bedBroken && distToBed < 4.0) {
                         bedBroken = true; scene.remove(bedMesh); scene.remove(pillowMesh);
                         notify("¡ROMPISTE SU CAMA!", "warning");
@@ -2242,13 +3019,20 @@
             else document.getElementById('sleep-overlay').style.display = 'none';
 
             keyItems.forEach((k, index) => {
-                if(k.visible && camera.position.distanceTo(k.position) < 2) {
-                    k.visible = false; keysCollected++;
+                if(k._collected) return; // Ya fue recogida
+                if(camera.position.distanceTo(k.position) < 2) {
+                    k._collected = true;
+                    k.visible = false;
+                    keysCollected++;
                     document.getElementById('objective').innerText = `LLAVES: ${keysCollected}/${totalKeys} 🗝️`;
                     notify("¡LLAVE ENCONTRADA!", "success"); showDialogue('key_found', 'system-speak');
                     if(keysCollected === totalKeys) { notify("¡PUERTA DESBLOQUEADA!", "success"); doorLight.color.setHex(0x00ff00); }
                 }
-                k.rotation.y += dt;
+                if (!k._collected) {
+                    k.visible = isNearPlayer(k.position, 70);
+                    if (!k.visible) { /* no girar si está oculta */ } else { k.rotation.y += dt; }
+                    return;
+                }
             });
 
             if(camera.position.distanceTo(doorMesh.position) < 8) {
@@ -2263,6 +3047,16 @@
             } else if (isSleeping) {
                 playerBody.velocity.set(0,0,0);
                 camera.position.copy(bedMesh.position); camera.position.y = 2.5; 
+            } else if(playerCaughtByC) {
+                // Si está atrapado por Cinnamoroll, no puede moverse
+                playerBody.velocity.set(0, 0, 0);
+                camera.position.copy(playerBody.position);
+                
+                // Mensaje en pantalla
+                if(Math.floor(caughtTimer) !== Math.floor(caughtTimer - dt)) {
+                    const timeLeft = Math.ceil(CAUGHT_DURATION - caughtTimer);
+                    document.getElementById('objective').innerText = `ATRAPADO POR CINNAMOROLL: ${timeLeft}s 🤗☁️`;
+                }
             } else if((controls.isLocked || isMobile) && !isAbducted) {
                 // Modificador de velocidad del jugador
                 const baseSpd = keys.shift ? 10 : 5;
@@ -2293,8 +3087,39 @@
             updateAI(dt, timeAlive);
             updateThrowables(dt);
             
+            // --- OPTIMIZACIÓN: Ocultar mallas fuera de vista del jugador ---
+            // (Sigue actualizando físicas, solo ahorra renderizado de geometría)
+            if (chococatMesh) {
+                const catPos3 = new THREE.Vector3(chococatBody.position.x, chococatBody.position.y, chococatBody.position.z);
+                const catVisible = isInPlayerView(catPos3, 3) || isNearPlayer(catPos3, 8);
+                chococatMesh.visible = catVisible;
+            }
+            if (kuromiMesh) {
+                const kPos3 = new THREE.Vector3(kuromiBody.position.x, kuromiBody.position.y, kuromiBody.position.z);
+                kuromiMesh.visible = isInPlayerView(kPos3, 2) || isNearPlayer(kPos3, 6);
+            }
+            if (melodyMesh) {
+                const mPos3 = new THREE.Vector3(melodyBody.position.x, melodyBody.position.y, melodyBody.position.z);
+                melodyMesh.visible = isInPlayerView(mPos3, 2) || isNearPlayer(mPos3, 6);
+            }
+            if (cinnamorollMesh) {
+                const ciPos3 = new THREE.Vector3(cinnamorollBody.position.x, cinnamorollBody.position.y, cinnamorollBody.position.z);
+                cinnamorollMesh.visible = isInPlayerView(ciPos3, 2) || isNearPlayer(ciPos3, 6);
+            }
+            // Ocultar llaves que están lejos y fuera de vista (solo afecta renderizado)
+            // Las llaves ya recogidas tienen visible=false permanentemente
+            keyItems.forEach(k => {
+                if (k.visible !== false) { // Solo actuar sobre llaves aún disponibles
+                    k.visible = isNearPlayer(k.position, 70); // Siempre visibles si están cerca
+                }
+            });
+
             // --- ACTUALIZACIÓN DE ANIMACIONES SKELETAL ---
-            mixers.forEach(mixer => mixer.update(dt));
+            // Solo actualizar mixers de personajes visibles para ahorrar CPU
+            mixers.forEach((mixer, i) => {
+                // Siempre actualizar (son pocas animaciones), pero podrías filtrar aquí si fuera necesario
+                mixer.update(dt);
+            });
 
             renderer.render(scene, camera);
         }
